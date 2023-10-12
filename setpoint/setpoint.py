@@ -72,7 +72,7 @@ with mp_face_mesh.FaceMesh() as face_mesh:
                 success, rot_vec, trans_vec = cv2.solvePnP(face_3d, points_of_interest, camera_matrix, distortion_matrix)
                 rotation_matrix, jacobian = cv2.Rodrigues(rot_vec)
                 angles, mtxR, mtxQ, Qx, Qy, Qz = cv2.RQDecomp3x3(rotation_matrix)
-                x = angles[0]
+                x = angles[0]-np.sign(angles[0])*180
                 y = angles[1]
                 z = angles[2]
                 
