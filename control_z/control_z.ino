@@ -3,6 +3,7 @@
 
 double ref = 1.0, systemOutput = 0.0, uN_0 = 0.0, uN_1 = 0.0, errN_0 = 0.0, errN_1 = 0.0, errN_2 = 0.0;
 unsigned int pwmValue = 0;
+char outputString[50];
 
 void setup()
 {
@@ -24,9 +25,8 @@ void loop()
 
     analogWrite(VOLTAGEWRITEPIN, pwmValue);
 
-    Serial.println("Control value: " + String(uN_0));
-    Serial.println("Reference: " + String(ref));
-    Serial.println("Output value: " + String(systemOutput));
+    sprintf(outputString, "Reference: %.2lf\nControl value: %.2lf\nOutput value: %.2lf\n", ref, uN_0, systemOutput);
+    Serial.print(outputString);
 };
 
 int real2pwm(double real)
