@@ -31,7 +31,7 @@ void loop()
 
 int real2pwm(double real)
 {
-  return (int)255 / 5 * max(0, min(real, 5));
+  return (int)255 / 5 * max(0.0, min(real, 5.0));
 }
 
 double pwm2real(int pwm)
