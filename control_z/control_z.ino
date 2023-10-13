@@ -25,7 +25,7 @@ void loop()
 
     analogWrite(VOLTAGEWRITEPIN, pwmValue);
 
-    sprintf(outputString, "Reference: %.2lf\nControl value: %.2lf\nOutput value: %.2lf\n", ref, uN_0, systemOutput);
+    sprintf(outputString, "Control value: %.2lf\nOutput value: %.2lf\n", uN_0, systemOutput);
     Serial.print(outputString);
 };
 
@@ -41,5 +41,5 @@ double pwm2real(int pwm)
 
 double controller(double uN_1, double errN_0, double errN_1, double errN_2)
 {
-    return uN_1 + 11.85 * errN_0 - 23.32 * errN_1 + 11.48 * errN_2;
+    return 0.9656449798564605 * uN_1 + 0.069255968776331 * errN_0 - 0.06759113027113339 * errN_1;
 }
