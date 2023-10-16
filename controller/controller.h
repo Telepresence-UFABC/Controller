@@ -8,11 +8,11 @@ typedef struct
     double curr;
 } Measure;
 
-Measure *createMeasure(double prev, double curr)
+Measure *createMeasure()
 {
     Measure *measure = (Measure *)malloc(sizeof(Measure));
-    measure->prev = prev;
-    measure->curr = curr;
+    measure->prev = 0.0;
+    measure->curr = 0.0;
     return measure;
 }
 
