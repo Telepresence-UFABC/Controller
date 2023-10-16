@@ -4,15 +4,14 @@
 #define VOLTAGEWRITEPIN 3
 #define SAMPLINGRATE 1000000
 
-Measure *err_0 = createMeasure(0.0, 0.0);
-Measure *err_1 = createMeasure(0.0, 0.0);
-Measure *err_2 = createMeasure(0.0, 0.0);
-Measure *u_0 = createMeasure(0.0, 0.0);
-Measure *u_1 = createMeasure(0.0, 0.0);
-Measure *u_2 = createMeasure(0.0, 0.0);
+Measure *err_0 = createMeasure();
+Measure *err_1 = createMeasure();
+Measure *err_2 = createMeasure();
+Measure *u_0 = createMeasure();
+Measure *u_1 = createMeasure();
+Measure *u_2 = createMeasure();
 
 double ref = 1.0, systemOutput = 0.0, intervalSeconds = 0.0;
-unsigned int pwmValue = 0;
 unsigned long prev = micros(), curr = micros();
 char outputString[100];
 
