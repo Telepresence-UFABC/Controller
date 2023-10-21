@@ -16,6 +16,16 @@ Measure *createMeasure()
     return measure;
 }
 
+int real2pwm(double real)
+{
+    return (int)255 / 5 * max(0.0, min(real, 5.0));
+}
+
+double adc2real(int pwm)
+{
+    return (double)5.0 / 1023 * pwm;
+}
+
 double derivative(Measure *value, double interval)
 {
     return (value->curr - value->prev) / interval;

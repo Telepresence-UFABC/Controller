@@ -26,7 +26,7 @@ void loop()
     if (curr - prev >= SAMPLINGRATE)
     {
         intervalSeconds = (curr - prev) / 1e6;
-        systemOutput = pwm2real(analogRead(VOLTAGEREADPIN));
+        systemOutput = adc2real(analogRead(VOLTAGEREADPIN));
 
         // update previous and current values
         err_0->prev = err_0->curr;
@@ -51,13 +51,3 @@ void loop()
         prev = micros();
     }
 };
-
-int real2pwm(double real)
-{
-    return (int)255 / 5 * max(0.0, min(real, 5.0));
-}
-
-double pwm2real(int pwm)
-{
-    return (double)5.0 / 1023 * pwm;
-}
