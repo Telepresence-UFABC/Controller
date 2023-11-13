@@ -26,6 +26,38 @@ double adc2real(int pwm)
     return (double)5.0 / 1023 * pwm;
 }
 
+/*  ACT | P1 | P2
+    FWD | 1 | 0
+    BWD | 0 | 1
+    BRK | 0 | 0
+    BRK | 1 | 1
+*/
+void hBridgeWrite(int pinOne, int pinTwo, double value)
+{
+    value = max(-5.0, min(value, 5.0));
+
+    int pwm = (int)255 / 5 * abs(value);
+
+    // FORWARD
+    if (value > 0)
+    {
+        analogWrite(pinOne, pwm);
+        analogWrite(pinTwo, LOW);
+    }
+    // BACKWARD
+    else if (value < 0)
+    {
+        analogWrite(pinOne, LOW);
+        analogWrite(pinTwo, pwm);
+    }
+    // BRAKE
+    else
+    {
+        analogWrite(pinOne, LOW);
+        analogWrite(pinTwo, LOW);
+    }
+}
+
 double derivative(Measure *value, double interval)
 {
     return (value->curr - value->prev) / interval;
