@@ -18,12 +18,12 @@ Measure *createMeasure()
 
 int real2pwm(double real)
 {
-    return (int)255 / 5 * max(0.0, min(real, 5.0));
+    return (int)255 / 5 * constrain(real, -5, 5);
 }
 
 double adc2real(int pwm)
 {
-    return (double)5.0 / 1023 * pwm;
+    return (double)5 / 1023 * pwm;
 }
 
 /*  ACT | P1 | P2
@@ -34,7 +34,7 @@ double adc2real(int pwm)
 */
 void hBridgeWrite(int pinOne, int pinTwo, double value)
 {
-    value = max(-5.0, min(value, 5.0));
+    value = constrain(value, -5, 5);
 
     int pwm = (int)255 / 5 * abs(value);
 
