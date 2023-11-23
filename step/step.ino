@@ -5,8 +5,7 @@
 #define MAXTIME 5000
 
 uint16_t adcValue = 0;
-double error = 0, output = 0, ramp = 0;
-unsigned long curr, prev;
+double error = 0, output = 0, ref = 1.0, time = 0;
 
 void setup()
 {
@@ -18,12 +17,8 @@ void loop()
 {
     adcValue = analogRead(0);
     output = (double)adcValue / 1023 * 5;
-    error = ramp - output;
-    error = error; // motor stops running at about 1V
-    ramp = (double)(curr - prev) / 1000;
+    error = ref - output;
+    time = (double)millis()/1000;
     hBridgeWrite(pinone, pintwo, error > 0 ? error + 1 : error - 1);
-    if (curr - prev > MAXTIME)
-        prev = millis();
-    curr = millis();
-    Serial.println(String(ramp, 6) + ", " + String(ramp, 6) + ", " + String(error, 6) + ", " + String(output, 6));
+    Serial.println(String(time, 6) + ", " + String(ref, 6) + ", " + String(error, 6) + ", " + String(output, 6));
 }
