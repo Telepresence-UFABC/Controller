@@ -1,19 +1,21 @@
 #include "/home/nikolas/Documents/GitHub/Controller/controller/controller.h"
 
 #define VOLTAGEREADPIN 0
-#define VOLTAGEWRITEPIN 3
-#define SAMPLINGRATE 1000000
+#define pinone 5
+#define pintwo 6
+#define SAMPLINGRATE 5000
 
 Measure *err = createMeasure();
 Measure *u = createMeasure();
 
-double ref = 1.0, systemOutput = 0.0, intervalSeconds = 0.0;
-unsigned long prev = micros(), curr = micros();
+uint16_t adcValue = 0;
+double output, time, ref = 3.5;
+unsigned long curr, prev;
 char outputString[100];
 
 void setup()
 {
-    Serial.begin(115200);
+    Serial.begin(9600);
 };
 
 void loop()
@@ -21,20 +23,21 @@ void loop()
     curr = micros();
     if (curr - prev >= SAMPLINGRATE)
     {
-        intervalSeconds = (curr - prev) / 1e6;
-        double systemOutput = adc2real(analogRead(VOLTAGEREADPIN));
+        time = (curr - prev) / 1e6;
+        adcValue = analogRead(VOLTAGEREADPIN);
+        output = (double)adcValue/1023*5;
 
         // update previous and current values
         err->prev = err->curr;
-        err->curr = ref - systemOutput;
+        err->curr = ref - output;
+        err->curr = err->curr > 0 ? err->curr + 1 : err->curr - 1; // motor starts to run at about 1V
 
         u->prev = u->curr;
-        u->curr = 0.9656449798564605 * u->prev + 0.069255968776331 * err->curr - 0.06759113027113339 * err->prev; // numerically solve recurrence equation
+        u->curr = 0.13403841905010236 * u->prev + 4499.797360001363 * err->curr - 3339.5093253347313 * err->prev; // numerically solve recurrence equation
 
-        analogWrite(VOLTAGEWRITEPIN, real2pwm(u->curr));
+        hBridgeWrite(pinone, pintwo, u->curr);
 
-        sprintf(outputString, "Current error: %f\nControl value: %f\n----------------------------\n", err->curr, u->curr);
-        Serial.print(outputString);
+        Serial.println(err->curr > 0 ? err->curr - 1 : err->curr + 1);
         prev = micros();
     }
 };
