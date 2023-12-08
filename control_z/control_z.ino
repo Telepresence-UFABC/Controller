@@ -9,14 +9,14 @@ Measure *err = createMeasure();
 Measure *u = createMeasure();
 
 uint16_t adcValue = 0;
-double output, time, ref = 1;
+double output, time, ref = 2;
 unsigned long curr, prev;
 char outputString[100];
 
 void setup()
 {
     Serial.begin(9600);
-    Serial.println("Erro,Esforco");
+    Serial.println("Tempo,Saida,Erro,Esforco");
 };
 
 void loop()
@@ -24,7 +24,7 @@ void loop()
     curr = micros();
     if (curr - prev >= SAMPLINGRATE)
     {
-        time = (double)(curr - prev) / 1e6;
+        time = (double)curr / 1e6;
         adcValue = analogRead(VOLTAGEREADPIN);
         output = (double)adcValue/1023*5;
 
@@ -38,7 +38,7 @@ void loop()
 
         hBridgeWrite(pinone, pintwo, u->curr);
 
-        Serial.println(String(err->curr, 6) + "," + String(u->curr, 6));
+        Serial.println(String(time, 6) + "," + String(output, 6) + "," + String(err->curr, 6) + "," + String(u->curr, 6));
         prev = micros();
     }
 };
