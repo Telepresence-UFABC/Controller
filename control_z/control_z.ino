@@ -14,7 +14,7 @@ Measure *u = createMeasure();
 uint16_t adcValue = 0;
 double output, time, ref = 1;
 unsigned long curr, prev, prevReset;
-bool resetting = false;
+unsigned char normalOperation = 1;
 
 inline double control(Measure *err, Measure *u)
 {
@@ -30,41 +30,30 @@ void setup()
 void loop()
 {
     curr = micros();
-    if ((curr - prev >= SAMPLINGRATE) && !resetting)
+    if (curr - prev >= SAMPLINGRATE) // run at fixed sampling rate
     {
-        time = (double)curr / 1e6;
         adcValue = analogRead(VOLTAGEREADPIN);
         output = (double)adcValue / 1023 * 5;
+        time = (double)curr / 1e6;
 
         // update previous and current values
         err->prev = err->curr;
-        err->curr = ref - output;
+        err->curr = ref * normalOperation - output; // ref - output if in normal operation, otherwise reference is set to 0
 
         u->prev = u->curr;
         u->curr = control(err, u); // numerically solve recurrence equation
 
         hBridgeWrite(pinone, pintwo, u->curr);
-
         Serial.println(String(time, 6) + "," + String(output, 6) + "," + String(err->curr, 6) + "," + String(u->curr, 6));
         prev = micros();
     }
     if (curr - prevReset >= RESET_INTERVAL) // resets motor to 0 position every few seconds
     {
-        resetting = true;
-        adcValue = analogRead(VOLTAGEREADPIN);
-        output = (double)adcValue / 1023 * 5;
+        normalOperation = 0;
 
-        // update previous and current values while setting reference to zero
-        err->prev = err->curr;
-        err->curr = -output;
-
-        u->prev = u->curr;
-        u->curr = control(err, u); // numerically solve recurrence equation
-
-        hBridgeWrite(pinone, pintwo, u->curr);
-        if (abs(output) <= TOLERANCE) // check if motor is at zero position, if it is start testing again
+        if (abs(output) <= TOLERANCE) // check if motor is at zero position, if it is start normal operation again
         {
-            resetting = false;
+            normalOperation = 1;
             prevReset = micros();
         }
     }
