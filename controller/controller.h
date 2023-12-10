@@ -16,14 +16,14 @@ Measure *createMeasure()
     return measure;
 }
 
-int real2pwm(double real)
+double voltage2angle(double voltage)
 {
-    return (int)255 / 5 * constrain(real, -5, 5);
+    return (double)voltage / 5 * 300; // max angle read by potentiometer is 300°
 }
 
-double adc2real(int pwm)
+double angle2voltage(double angle)
 {
-    return (double)5 / 1023 * pwm;
+    return (double)angle / 300 * 5; // max voltage read by ADC is 5V
 }
 
 /*  ACT | P1 | P2
