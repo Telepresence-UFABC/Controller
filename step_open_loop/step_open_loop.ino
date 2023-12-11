@@ -3,7 +3,7 @@
 #define VOLTAGEREADPIN 0
 #define pinone 5
 #define pintwo 6
-#define SAMPLINGRATE 5000
+#define SAMPLINGRATE 1000
 #define RESET_INTERVAL 5000000
 
 uint16_t adcValue = 0;
