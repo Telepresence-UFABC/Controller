@@ -1,4 +1,4 @@
-#include "/home/nikolas/Documents/GitHub/Controller/controller/controller.h"
+#include "/home/nikolas/GitHub/Controller/controller/controller.h"
 #include <math.h>
 
 #define VOLTAGEREADPIN 0
@@ -6,7 +6,7 @@
 #define pintwo 6
 #define SAMPLINGRATE 5000
 #define RESET_INTERVAL 5000000
-#define TOLERANCE 0.3
+#define TOLERANCE 0.05
 
 Measure *err = createMeasure();
 Measure *u = createMeasure();
@@ -50,8 +50,7 @@ void loop()
     if (curr - prevReset >= RESET_INTERVAL) // resets motor to 0 position every few seconds
     {
         normalOperation = 0;
-
-        if (abs(output) <= TOLERANCE) // check if motor is at zero position, if it is start normal operation again
+        if ((abs(output) <= TOLERANCE) &&  (curr-prevReset >= 1.5*RESET_INTERVAL)) // check if motor is at zero position, if it is and enough time has passed, start normal operation again
         {
             normalOperation = 1;
             prevReset = micros();
