@@ -4,7 +4,7 @@
 #define VOLTAGEREADPIN 0
 #define pinone 5
 #define pintwo 6
-#define SAMPLINGRATE 5000
+#define SAMPLING_INTERVAL 5000
 #define RESET_INTERVAL 5000000
 #define TOLERANCE 0.05
 
@@ -30,7 +30,7 @@ void setup()
 void loop()
 {
     curr = micros();
-    if (curr - prev >= SAMPLINGRATE) // run at fixed sampling rate
+    if (curr - prev >= SAMPLING_INTERVAL) // run at fixed sampling rate
     {
         adcValue = analogRead(VOLTAGEREADPIN);
         output = (double)adcValue / 1023 * 5;
