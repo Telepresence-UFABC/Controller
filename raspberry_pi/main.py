@@ -51,7 +51,7 @@ if __name__ == "__main__":
         curr = time_ns()
         if curr - prev >= SAMPLING_INTERVAL:
             output = voltage2angle(analog_read(VOLTAGE_READ_PIN))
-            time = (START - curr) / 1e9
+            time = (curr - START) / 1e9
 
             # Update previous and current values
             err.prev = err.curr
