@@ -2,6 +2,7 @@ from time import time_ns
 from json import load
 from Adafruit_ADS1x15 import ADS1115
 from controller import *
+from raspberry_pi.controller import angle2voltage
 
 VOLTAGE_READ_PIN = 0
 START = time_ns()
@@ -41,7 +42,7 @@ def analog_read(pin: int = 0) -> float:
 
 
 def control(err: Measure, u: Measure) -> float:
-    return angle2voltage(C1 * u.prev + C2 * err.curr + C3 * err.prev, V_OUT)
+    return C1 * u.prev + C2 * err.curr + C3 * err.prev, V_OUT
 
 
 if __name__ == "__main__":
@@ -61,7 +62,7 @@ if __name__ == "__main__":
             u.prev = u.curr
             u.curr = control(err, u)
             
-            h_bridge_write(rpi, PIN_ONE, PIN_TWO, u.curr)
+            h_bridge_write(rpi, PIN_ONE, PIN_TWO, angle2voltage(u.curr))
 
             print("%.6f,%.6f,%.6f,%.6f" % (time, output, err.curr, u.curr))
             prev = time_ns()
