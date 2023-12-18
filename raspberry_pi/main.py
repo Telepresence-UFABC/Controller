@@ -19,7 +19,7 @@ TOLERANCE = 5
 # Load ontroller constants
 with open("../system_parameters/controller_1.info", "r") as file:
     consts: dict = load(file)
-    C1, C2, C3 = float(consts["c1"]), float(consts["c2"]), float(consts["c3"])
+    C1, C2, C3 = consts["c1"], consts["c2"], consts["c3"]
 
 err = Measure()
 u = Measure()
