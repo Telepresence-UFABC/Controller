@@ -18,7 +18,7 @@ unsigned char normalOperation = 1;
 
 inline double control(Measure *err, Measure *u)
 {
-    return 0.9448595965430482 * u->prev + 8.236474641898383 * err->curr - 7.812049534046017 * err->prev;
+    return 0.953720311449073 * u->prev + 6.093249363038537 * err->curr - 5.851599403259743 * err->prev;
 }
 
 void setup()
