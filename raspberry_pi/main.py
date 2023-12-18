@@ -33,8 +33,11 @@ normal_operation = 1
 
 adc = ADS1115()
 
+def adc2voltage(val: int) -> float:
+    return max(0, val/32767*4.096)
+
 def analog_read(pin: int = 0) -> float:
-    return max(adc.read_adc(pin, gain=GAIN), 0)/32767*4.096
+    return adc2voltage(adc.read_adc(pin, gain=GAIN))
 
 
 def control(err: Measure, u: Measure) -> float:
