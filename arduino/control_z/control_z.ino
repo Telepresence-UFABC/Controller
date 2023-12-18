@@ -1,4 +1,4 @@
-#include "/home/nikolas/GitHub/Controller/controller/controller.h"
+#include "/home/nikolas/Documents/GitHub/Controller/controller/controller.h"
 #include <math.h>
 
 #define VOLTAGEREADPIN 0
