@@ -1,10 +1,23 @@
+from pigpio import pi
 from time import time_ns
 from json import load
 from Adafruit_ADS1x15 import ADS1115
-from controller import *
 
+class Measure:
+    def __init__(self, prev=0, curr=0):
+        self.prev = prev
+        self.curr = curr
+
+# System parameters
+V_OUT = 5
+PWM_FREQUENCY = 50
+PWM_MAX_RANGE = 255
 VOLTAGE_READ_PIN = 0
+PIN_ONE = 17
+PIN_TWO = 27
+
 START = time_ns()
+
 # Run new iteration every SAMPLING_INTERVAL nanoseconds
 SAMPLING_INTERVAL = 5_000_000
 # Run new test every RESET_INTERVAL nanoseconds
@@ -18,7 +31,7 @@ TESTING = False
 # 3.3 V to 5 V
 VOLTAGE_CONSTANT = 5/3.3
 # 1V every 60 deg
-ANGLE_CONSTANT = 5/300
+ANGLE_CONSTANT = 300/5
 
 # Load controller constants
 with open("../system_parameters/controller_1.info", "r") as file:
@@ -48,8 +61,14 @@ def control(err: Measure, u: Measure) -> float:
     return C1 * u.prev + C2 * err.curr + C3 * err.prev
 
 
+# Setup
+rpi = pi()
+
+# Set PWM frequency
+rpi.set_PWM_frequency(PIN_ONE, PWM_FREQUENCY)
+rpi.set_PWM_frequency(PIN_TWO, PWM_FREQUENCY)
+
 if __name__ == "__main__":
-    rpi = setup()
     print("Tempo,Saída,Erro,Esforço")
     while True:
         curr = time_ns()
@@ -65,16 +84,23 @@ if __name__ == "__main__":
             u.prev = u.curr
             u.curr = control(err, u)
             
-            h_bridge_write(rpi, PIN_ONE, PIN_TWO, u.curr)
+            # Control
+            value = max(-V_OUT, min(V_OUT, u.curr))
 
+            pwm = PWM_MAX_RANGE / V_OUT * abs(value)
+
+            # FORWARD
+            if value > 0:
+                rpi.set_PWM_dutycycle(pin_one, pwm)
+                rpi.set_PWM_dutycycle(pin_two, 0)
+            # FORWARD
+            elif value < 0:
+                rpi.set_PWM_dutycycle(pin_one, 0)
+                rpi.set_PWM_dutycycle(pin_two, pwm)
+            # BRAKE
+            else:
+                rpi.set_PWM_dutycycle(pin_one, 0)
+                rpi.set_PWM_dutycycle(pin_two, 0)
+            
             print("%.6f,%.6f,%.6f,%.6f" % (time, output, err.curr, u.curr))
             prev = time_ns()
-
-        if curr - prev_reset >= RESET_INTERVAL and TESTING:
-            normal_operation = 0
-            if (
-                abs(output) <= TOLERANCE
-                and curr - prev_reset >= 1.5 * RESET_INTERVAL
-            ):
-                normal_operation = 1
-                prev_reset = time_ns()

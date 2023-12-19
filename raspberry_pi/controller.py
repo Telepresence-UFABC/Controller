@@ -1,28 +1,10 @@
 from pigpio import pi
 
-# System parameters
-VCC_RASPBERRY = 3.3
-V_OUT = 5
-PWM_MAX_RANGE = 1000
-PIN_ONE = 17
-PIN_TWO = 27
-
 
 class Measure:
     def __init__(self, prev=0, curr=0):
         self.prev = prev
         self.curr = curr
-
-
-def setup() -> pi:
-    rpi = pi()
-
-    # 0 <= PWM <= PWM_MAX_RANGE
-    rpi.set_PWM_range(PIN_ONE, PWM_MAX_RANGE)
-    rpi.set_PWM_range(PIN_TWO, PWM_MAX_RANGE)
-    
-    return rpi
-
 
 def voltage2angle(voltage: float) -> float:
     """Converts potentiometer measured voltage to angle"""
