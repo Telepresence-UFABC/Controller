@@ -41,7 +41,7 @@ with open("../system_parameters/controller_1.info", "r") as file:
 err = Measure()
 u = Measure()
 
-ref_pan = 60 * ANGLE_CONSTANT
+ref_pan = 1.5
 curr = time_ns()
 prev = 0
 prev_reset = 0
