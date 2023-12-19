@@ -1,22 +1,25 @@
 from pigpio import pi
 
+V_OUT = 5
+PIN_ONE = 17
+PIN_TWO = 27
+PWM_FREQUENCY = 1_000
+PWM_MAX_RANGE = 255
 
 class Measure:
     def __init__(self, prev=0, curr=0):
         self.prev = prev
         self.curr = curr
 
-def voltage2angle(voltage: float) -> float:
-    """Converts potentiometer measured voltage to angle"""
-    # Max angle read by potentiometer is 300°
-    return voltage / VCC_RASPBERRY * 300
+def setup()->pi:
+    # Setup
+    rpi = pi()
 
+    # Set PWM frequency
+    rpi.set_PWM_frequency(PIN_ONE, PWM_FREQUENCY)
+    rpi.set_PWM_frequency(PIN_TWO, PWM_FREQUENCY)
 
-def angle2voltage(angle: float, v_level: float = VCC_RASPBERRY) -> float:
-    """Converts angle to voltage, taking into account the appropriate voltage level"""
-    # Max angle read by potentiometer is 300°
-    return angle / 300 * v_level
-
+    return rpi
 
 def h_bridge_write(rpi: pi, pin_one: int, pin_two: int, value: float) -> None:
     """
