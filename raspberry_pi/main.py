@@ -1,9 +1,21 @@
+from pigpio import pi
 from time import time_ns
 from json import load
 from Adafruit_ADS1x15 import ADS1115
-from controller import *
 
+class Measure:
+    def __init__(self, prev=0, curr=0):
+        self.prev = prev
+        self.curr = curr
+
+# System parameters
+V_OUT = 5
+PWM_FREQUENCY = 1_000
+PWM_MAX_RANGE = 255
 VOLTAGE_READ_PIN = 0
+PIN_ONE = 17
+PIN_TWO = 27
+
 START = time_ns()
 
 # Run new iteration every SAMPLING_INTERVAL nanoseconds
@@ -48,9 +60,15 @@ def analog_read(pin: int = 0) -> float:
 def control(err: Measure, u: Measure) -> float:
     return C1 * u.prev + C2 * err.curr + C3 * err.prev
 
+
+# Setup
+rpi = pi()
+
+# Set PWM frequency
+rpi.set_PWM_frequency(PIN_ONE, PWM_FREQUENCY)
+rpi.set_PWM_frequency(PIN_TWO, PWM_FREQUENCY)
+
 if __name__ == "__main__":
-    rpi = setup()
-    
     print("Tempo,Saída,Erro,Esforço")
     while True:
         curr = time_ns()
@@ -66,7 +84,23 @@ if __name__ == "__main__":
             u.prev = u.curr
             u.curr = control(err, u)
             
-            h_bridge_write(rpi, PIN_ONE, PIN_TWO, u.curr)
+            # Control
+            value = max(-V_OUT, min(V_OUT, u.curr))
+
+            pwm = PWM_MAX_RANGE / V_OUT * abs(value)
+
+            # FORWARD
+            if value > 0:
+                rpi.set_PWM_dutycycle(PIN_ONE, pwm)
+                rpi.set_PWM_dutycycle(PIN_TWO, 0)
+            # FORWARD
+            elif value < 0:
+                rpi.set_PWM_dutycycle(PIN_ONE, 0)
+                rpi.set_PWM_dutycycle(PIN_TWO, pwm)
+            # BRAKE
+            else:
+                rpi.set_PWM_dutycycle(PIN_ONE, 0)
+                rpi.set_PWM_dutycycle(PIN_TWO, 0)
             
             print("%.6f,%.6f,%.6f,%.6f" % (time, output, err.curr, u.curr))
             prev = time_ns()
