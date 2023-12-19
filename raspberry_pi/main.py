@@ -64,6 +64,10 @@ def control(err: Measure, u: Measure) -> float:
 # Setup
 rpi = pi()
 
+# Set PWM range
+rpi.set_PWM_range(PIN_ONE, PWM_MAX_RANGE)
+rpi.set_PWM_range(PIN_TWO, PWM_MAX_RANGE)
+
 # Set PWM frequency
 rpi.set_PWM_frequency(PIN_ONE, PWM_FREQUENCY)
 rpi.set_PWM_frequency(PIN_TWO, PWM_FREQUENCY)
