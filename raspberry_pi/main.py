@@ -2,7 +2,6 @@ from time import time_ns
 from json import load
 from Adafruit_ADS1x15 import ADS1115
 from controller import *
-from raspberry_pi.controller import angle2voltage
 
 VOLTAGE_READ_PIN = 0
 START = time_ns()
@@ -16,8 +15,12 @@ GAIN = 1
 TOLERANCE = 5
 # Enables testing
 TESTING = False
+# 3.3 V to 5 V
+VOLTAGE_CONSTANT = 5/3.3
+# 1V every 60 deg
+ANGLE_CONSTANT = 5/300
 
-# Load ontroller constants
+# Load controller constants
 with open("../system_parameters/controller_1.info", "r") as file:
     consts: dict = load(file)
     C1, C2, C3 = consts["c1"], consts["c2"], consts["c3"]
@@ -25,7 +28,7 @@ with open("../system_parameters/controller_1.info", "r") as file:
 err = Measure()
 u = Measure()
 
-ref_pan = angle2voltage(60)
+ref_pan = 60 * ANGLE_CONSTANT
 curr = time_ns()
 prev = 0
 prev_reset = 0
@@ -51,7 +54,7 @@ if __name__ == "__main__":
     while True:
         curr = time_ns()
         if curr - prev >= SAMPLING_INTERVAL:
-            output = voltage2angle(analog_read(VOLTAGE_READ_PIN))
+            output = analog_read(VOLTAGE_READ_PIN) * VOLTAGE_CONSTANT
             time = (curr - START) / 1e9
 
             # Update previous and current values
@@ -62,7 +65,7 @@ if __name__ == "__main__":
             u.prev = u.curr
             u.curr = control(err, u)
             
-            h_bridge_write(rpi, PIN_ONE, PIN_TWO, angle2voltage(u.curr, V_OUT))
+            h_bridge_write(rpi, PIN_ONE, PIN_TWO, u.curr)
 
             print("%.6f,%.6f,%.6f,%.6f" % (time, output, err.curr, u.curr))
             prev = time_ns()
