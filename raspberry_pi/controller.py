@@ -3,10 +3,9 @@ from pigpio import pi
 # System parameters
 VCC_RASPBERRY = 3.3
 V_OUT = 5
-PWM_FREQUENCY = 8_000  # Hz
 PWM_MAX_RANGE = 1000
 PIN_ONE = 17
-PIN_TWO = 22
+PIN_TWO = 27
 
 
 class Measure:
@@ -20,10 +19,8 @@ def setup() -> pi:
 
     # 0 <= PWM <= PWM_MAX_RANGE
     rpi.set_PWM_range(PIN_ONE, PWM_MAX_RANGE)
-
-    # Set PWM frequency
-    rpi.set_PWM_frequency(PIN_ONE, PWM_FREQUENCY)
-    rpi.set_PWM_frequency(PIN_TWO, PWM_FREQUENCY)
+    rpi.set_PWM_range(PIN_TWO, PWM_MAX_RANGE)
+    
     return rpi
 
 

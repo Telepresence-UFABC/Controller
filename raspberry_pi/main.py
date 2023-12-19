@@ -10,12 +10,12 @@ START = time_ns()
 SAMPLING_INTERVAL = 5_000_000
 # Run new test every RESET_INTERVAL nanoseconds
 RESET_INTERVAL = 2_000_000_000
-# Update reference every RECEIVE_INTERVAL nanoseconds
-RECEIVE_INTERVAL = 5_000_000
 # ADC gain set to GAIN
 GAIN = 1
-
+# Tolerance set to TOLERANCE
 TOLERANCE = 5
+# Enables testing
+TESTING = False
 
 # Load ontroller constants
 with open("../system_parameters/controller_1.info", "r") as file:
@@ -42,7 +42,7 @@ def analog_read(pin: int = 0) -> float:
 
 
 def control(err: Measure, u: Measure) -> float:
-    return C1 * u.prev + C2 * err.curr + C3 * err.prev, V_OUT
+    return C1 * u.prev + C2 * err.curr + C3 * err.prev
 
 
 if __name__ == "__main__":
@@ -62,12 +62,12 @@ if __name__ == "__main__":
             u.prev = u.curr
             u.curr = control(err, u)
             
-            h_bridge_write(rpi, PIN_ONE, PIN_TWO, angle2voltage(u.curr))
+            h_bridge_write(rpi, PIN_ONE, PIN_TWO, angle2voltage(u.curr, V_OUT))
 
             print("%.6f,%.6f,%.6f,%.6f" % (time, output, err.curr, u.curr))
             prev = time_ns()
 
-        if curr - prev_reset >= RESET_INTERVAL:
+        if curr - prev_reset >= RESET_INTERVAL and TESTING:
             normal_operation = 0
             if (
                 abs(output) <= TOLERANCE
