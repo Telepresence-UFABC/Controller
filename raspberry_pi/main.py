@@ -1,3 +1,4 @@
+from requests import get
 from pigpio import pi
 from time import time_ns
 from json import load
@@ -22,6 +23,8 @@ START = time_ns()
 SAMPLING_INTERVAL = 5_000_000
 # Run new test every RESET_INTERVAL nanoseconds
 RESET_INTERVAL = 2_000_000_000
+# Receive new reference every RECEIVE_INTERVAL nanoseconds
+RECEIVE_INTERVAL = 2_000_000_000
 # ADC gain set to GAIN
 GAIN = 1
 # Tolerance set to TOLERANCE
@@ -108,3 +111,12 @@ if __name__ == "__main__":
             
             print("%.6f,%.6f,%.6f,%.6f" % (time, output, err.curr, u.curr))
             prev = time_ns()
+        if curr - prev_receive >= RECEIVE_INTERVAL:
+            try:
+                ref: dict[str, float] = get("IP").json()
+                # TODO convert angle to voltage
+                ref_pan = ref.get("ref_pan", 0)
+            except:
+                pass
+            finally:
+                prev_receive = time_ns()
