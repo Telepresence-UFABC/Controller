@@ -1,11 +1,11 @@
 #include "/home/nikolas/Documents/GitHub/Controller/arduino/controller/controller.h"
 #include <math.h>
 
-#define VOLTAGEREADPIN 0
-#define pinone 5
-#define pintwo 6
+#define VOLTAGE_READ_PIN 0
+#define PIN_ONE 5
+#define PIN_TWO 6
 #define SAMPLING_INTERVAL 5000
-#define RESET_INTERVAL 5000000
+#define RESET_INTERVAL 2000000
 #define TOLERANCE 0.05
 
 Measure *err = createMeasure();
@@ -32,7 +32,7 @@ void loop()
     curr = micros();
     if (curr - prev >= SAMPLING_INTERVAL) // run at fixed sampling rate
     {
-        adcValue = analogRead(VOLTAGEREADPIN);
+        adcValue = analogRead(VOLTAGE_READ_PIN);
         output = (double)adcValue / 1023 * 5;
         time = (double)curr / 1e6;
 
@@ -43,14 +43,14 @@ void loop()
         u->prev = u->curr;
         u->curr = control(err, u); // numerically solve recurrence equation
 
-        hBridgeWrite(pinone, pintwo, u->curr);
+        hBridgeWrite(PIN_ONE, PIN_TWO, u->curr);
         Serial.println(String(time, 6) + "," + String(output, 6) + "," + String(err->curr, 6) + "," + String(u->curr, 6));
         prev = micros();
     }
     if (curr - prevReset >= RESET_INTERVAL) // resets motor to 0 position every few seconds
     {
         normalOperation = 0;
-        if ((abs(output) <= TOLERANCE) &&  (curr-prevReset >= 1.5*RESET_INTERVAL)) // check if motor is at zero position, if it is and enough time has passed, start normal operation again
+        if ((abs(output) <= TOLERANCE) && (curr - prevReset >= 1.5 * RESET_INTERVAL)) // check if motor is at zero position, if it is and enough time has passed, start normal operation again
         {
             normalOperation = 1;
             prevReset = micros();
