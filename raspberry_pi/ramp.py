@@ -11,7 +11,7 @@ start_time = str(datetime.now())
 # Run new iteration every SAMPLING_INTERVAL nanoseconds
 SAMPLING_INTERVAL = 5_000_000
 # Run new test every RESET_INTERVAL nanoseconds
-RESET_INTERVAL = 2_000_000_000
+RESET_INTERVAL = 5_000_000_000
 # ADC gain set to GAIN
 GAIN = 1
 # Tolerance set to TOLERANCE
@@ -29,7 +29,7 @@ with open("../system_parameters/controller_1.info", "r") as file:
 err = Measure()
 u = Measure()
 
-ref = 1
+ref = 0
 output = 0
 curr = time_ns()
 prev = 0
@@ -58,6 +58,8 @@ if __name__ == "__main__":
         if curr - prev >= SAMPLING_INTERVAL:
             output = analog_read(VOLTAGE_READ_PIN) * VOLTAGE_CONSTANT
             time = (curr - START) / 1e9
+
+            ref = (curr-prev_reset) / 1e9
 
             # Update previous and current values
             err.prev = err.curr
