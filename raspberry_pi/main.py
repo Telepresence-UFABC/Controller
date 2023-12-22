@@ -1,11 +1,13 @@
-from requests import get
+from requests import get, post
+from datetime import datetime
 from time import time_ns
-from json import load
+from json import load, dumps
 from Adafruit_ADS1x15 import ADS1115
 from controller import *
 
 VOLTAGE_READ_PIN = 0
 START = time_ns()
+start_time = str(datetime.now())
 # Run new iteration every SAMPLING_INTERVAL nanoseconds
 SAMPLING_INTERVAL = 5_000_000
 # Run new test every RESET_INTERVAL nanoseconds
@@ -55,7 +57,6 @@ def control(err: Measure, u: Measure) -> float:
 
 if __name__ == "__main__":
     rpi = setup()
-    print("Tempo,Saída,Erro,Esforço")
     while True:
         curr = time_ns()
         if curr - prev >= SAMPLING_INTERVAL:
@@ -71,8 +72,8 @@ if __name__ == "__main__":
             u.curr = control(err, u)
 
             h_bridge_write(rpi, PIN_ONE, PIN_TWO, u.curr)
-
-            print("%.6f,%.6f,%.6f,%.6f" % (time, output, err.curr, u.curr))
+            data = {"start_time": start_time, "Tempo": time, "Saída": output, "Erro": err.curr, "Esforço": u.curr}
+            post("http://192.168.0.100:8080/log", dumps(data))
             prev = time_ns()
         if curr - prev_receive >= RECEIVE_INTERVAL:
             try:
