@@ -4,22 +4,29 @@ V_OUT = 5
 PIN_ONE = 17
 PIN_TWO = 27
 PWM_FREQUENCY = 1_000
-PWM_MAX_RANGE = 255
+PWM_MAX_RANGE = 32767
+
 
 class Measure:
     def __init__(self, prev=0, curr=0):
         self.prev = prev
         self.curr = curr
 
-def setup()->pi:
+
+def setup() -> pi:
     # Setup
     rpi = pi()
+
+    # Set PWM range
+    rpi.set_PWM_range(PIN_ONE, PWM_MAX_RANGE)
+    rpi.set_PWM_range(PIN_TWO, PWM_MAX_RANGE)
 
     # Set PWM frequency
     rpi.set_PWM_frequency(PIN_ONE, PWM_FREQUENCY)
     rpi.set_PWM_frequency(PIN_TWO, PWM_FREQUENCY)
 
     return rpi
+
 
 def h_bridge_write(rpi: pi, pin_one: int, pin_two: int, value: float) -> None:
     """
