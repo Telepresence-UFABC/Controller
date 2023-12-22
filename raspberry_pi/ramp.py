@@ -11,7 +11,7 @@ start_time = str(datetime.now())
 # Run new iteration every SAMPLING_INTERVAL nanoseconds
 SAMPLING_INTERVAL = 5_000_000
 # Run new test every RESET_INTERVAL nanoseconds
-RESET_INTERVAL = 5_000_000_000
+RESET_INTERVAL = 3_300_000_000
 # ADC gain set to GAIN
 GAIN = 1
 # Tolerance set to TOLERANCE
