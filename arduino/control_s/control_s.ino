@@ -2,18 +2,19 @@
 
 #define VOLTAGEREADPIN 0
 #define VOLTAGEWRITEPIN 3
-#define SAMPLINGRATE 1000000
+#define PIN_ONE 5
+#define PIN_TWO 6
+#define SAMPLING_INTERVAL 1000000
 
-Measure *err_0 = createMeasure();
-Measure *err_1 = createMeasure();
-Measure *err_2 = createMeasure();
-Measure *u_0 = createMeasure();
-Measure *u_1 = createMeasure();
-Measure *u_2 = createMeasure();
+Measure *err = createMeasure();
+Measure *errDot = createMeasure();
+Measure *errDotDot = createMeasure();
+Measure *u = createMeasure();
+Measure *uDot = createMeasure();
 
-double ref = 1.0, systemOutput = 0.0, intervalSeconds = 0.0;
+uint16_t adcValue = 0;
+double ref = 1, output = 0, time = 0, deltaT = 0;
 unsigned long prev = micros(), curr = micros();
-char outputString[100];
 
 void setup()
 {
@@ -23,31 +24,33 @@ void setup()
 void loop()
 {
     curr = micros();
-    if (curr - prev >= SAMPLINGRATE)
+    if (curr - prev >= SAMPLING_INTERVAL)
     {
-        intervalSeconds = (curr - prev) / 1e6;
-        systemOutput = adc2real(analogRead(VOLTAGEREADPIN));
+        adcValue = analogRead(VOLTAGEREADPIN);
+        output = (double)adcValue / 1023 * 5;
+        time = (double)curr / 1e6;
+
+        deltaT = (curr - prev) / 1e6;
 
         // update previous and current values
-        err_0->prev = err_0->curr;
-        err_0->curr = ref - systemOutput;
+        err->prev = err->curr;
+        err->curr = ref - output;
 
-        err_1->prev = err_1->curr;
-        err_1->curr = derivative(err_0, intervalSeconds);
+        errDot->prev = errDot->curr;
+        errDot->curr = derivative(err, deltaT);
 
-        err_2->prev = err_2->curr;
-        err_2->curr = derivative(err_1, intervalSeconds);
+        errDotDot->prev = errDotDot->curr;
+        errDotDot->curr = derivative(errDot, deltaT);
 
-        u_1->prev = u_1->curr;
-        u_1->curr = -34.95902799659847 * u_0->curr + 1.6941086242955898 * err_0->curr + 0.06925596877633099 * err_1->curr; // numerically solve differential equation
+        uDot->prev = uDot->curr;
+        uDot->curr = -34.95902799659847 * u->curr + 1.6941086242955898 * err->curr + 0.06925596877633099 * errDot->curr; // numerically solve differential equation
 
-        u_0->prev = u_0->curr;
-        u_0->curr += riemannIntegral(u_1, intervalSeconds);
+        u->prev = u->curr;
+        u->curr += riemannIntegral(uDot, deltaT);
 
-        analogWrite(VOLTAGEWRITEPIN, real2pwm(u_0->curr));
+        hBridgeWrite(PIN_ONE, PIN_TWO, u->curr);
 
-        sprintf(outputString, "Current error: %f\nControl value: %f\n----------------------------\n", err_0->curr, u_0->curr);
-        Serial.print(outputString);
+        Serial.println(String(time, 6) + "," + String(output, 6) + "," + String(err->curr, 6) + "," + String(u->curr, 6));
         prev = micros();
     }
 };
