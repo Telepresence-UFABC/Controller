@@ -34,7 +34,7 @@ TESTING = False
 # 3.3 V to 5 V
 VOLTAGE_CONSTANT = 5/3.3
 # 1V every 60 deg
-ANGLE_CONSTANT = 300/5
+ANGLE_CONSTANT = 5/300
 
 # Load controller constants
 with open("../system_parameters/controller_1.info", "r") as file:
@@ -113,7 +113,7 @@ if __name__ == "__main__":
             prev = time_ns()
         if curr - prev_receive >= RECEIVE_INTERVAL:
             try:
-                ref: dict[str, float] = get("192.168.0.100:8080/reference").json()
+                ref: dict[str, float] = get("http://192.168.0.100:8080/reference").json()
                 ref_pan = max(0, min(5, ref.get("ref_pan", 0)*ANGLE_CONSTANT))
             except:
                 pass
