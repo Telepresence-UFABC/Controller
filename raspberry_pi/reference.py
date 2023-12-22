@@ -47,7 +47,7 @@ camera_matrix = np.array(
 
 @app.route("/reference")
 def reference() -> dict[str, float]:
-    y = 0
+    y = 90
     with mp_face_mesh.FaceMesh() as face_mesh:
         ok, frame = cap.read()
         if not ok:
