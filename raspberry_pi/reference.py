@@ -78,8 +78,9 @@ def reference() -> dict[str, float]:
                 rotation_matrix, jacobian = cv2.Rodrigues(rot_vec)
                 angles, mtxR, mtxQ, Qx, Qy, Qz = cv2.RQDecomp3x3(rotation_matrix)
                 x = angles[0] - np.sign(angles[0]) * 180
-                y = angles[1]
+                y = angles[1] + 90
                 z = angles[2]
+        print(y)
         return {"ref_pan": y}
 
 
