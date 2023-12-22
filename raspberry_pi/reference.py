@@ -101,4 +101,4 @@ def log():
 
 
 if __name__ == "__main__":
-    app.run(port=8080)
+    app.run(host="192.168.0.100", port=8080)

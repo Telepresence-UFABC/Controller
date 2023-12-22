@@ -113,9 +113,8 @@ if __name__ == "__main__":
             prev = time_ns()
         if curr - prev_receive >= RECEIVE_INTERVAL:
             try:
-                ref: dict[str, float] = get("IP").json()
-                # TODO convert angle to voltage
-                ref_pan = ref.get("ref_pan", 0)
+                ref: dict[str, float] = get("192.168.0.100:8080/reference").json()
+                ref_pan = max(0, min(5, ref.get("ref_pan", 0)*ANGLE_CONSTANT))
             except:
                 pass
             finally:
