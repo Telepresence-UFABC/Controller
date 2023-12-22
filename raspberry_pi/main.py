@@ -73,7 +73,10 @@ if __name__ == "__main__":
 
             h_bridge_write(rpi, PIN_ONE, PIN_TWO, u.curr)
             data = {"start_time": start_time, "Tempo": time, "Saída": output, "Erro": err.curr, "Esforço": u.curr}
-            post("http://192.168.0.100:8080/log", dumps(data))
+            try:
+                post("http://192.168.0.100:8080/log", dumps(data))
+            except:
+                print("Server is not accessible")
             prev = time_ns()
         if curr - prev_receive >= RECEIVE_INTERVAL:
             try:
