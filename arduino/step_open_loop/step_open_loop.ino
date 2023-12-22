@@ -1,4 +1,4 @@
-#include "/home/nikolas/GitHub/Controller/controller/controller.h"
+#include "/home/nikolas/Documents/GitHub/Controller/arduino/controller/controller.h"
 
 #define VOLTAGEREADPIN 0
 #define pinone 5

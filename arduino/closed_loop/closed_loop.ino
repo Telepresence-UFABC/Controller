@@ -1,4 +1,4 @@
-#include "/home/nikolas/Documents/GitHub/Controller/controller/controller.h"
+#include "/home/nikolas/Documents/GitHub/Controller/arduino/controller/controller.h"
 
 #define pinone 5
 #define pintwo 6
