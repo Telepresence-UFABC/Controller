@@ -14,6 +14,8 @@ SAMPLING_INTERVAL = 5_000_000
 RESET_INTERVAL = 2_000_000_000
 # Receive new reference every RECEIVE_INTERVAL nanoseconds
 RECEIVE_INTERVAL = 500_000_000
+# Send collected data every SEND_DATA nanoseconds
+SEND_INTERVAL = 2_000_000_000
 # ADC gain set to GAIN
 GAIN = 1
 # Tolerance set to TOLERANCE
@@ -38,9 +40,20 @@ curr = time_ns()
 prev = 0
 prev_reset = 0
 prev_receive = 0
+prev_send = 0
 normal_operation = 1
+data_log = []
 
 adc = ADS1115()
+
+
+def send_log(data) -> None:
+    for entry in data:
+        try:
+            post("http://192.168.0.100:8080/log", dumps(entry))
+        except:
+            print("Server is not accessible")
+            continue
 
 
 def adc2voltage(val: int) -> float:
@@ -72,17 +85,26 @@ if __name__ == "__main__":
             u.curr = control(err, u)
 
             h_bridge_write(rpi, PIN_ONE, PIN_TWO, u.curr)
-            data = {"start_time": start_time, "Tempo": time, "Saída": output, "Erro": err.curr, "Esforço": u.curr}
-            try:
-                post("http://192.168.0.100:8080/log", dumps(data))
-            except:
-                print("Server is not accessible")
+
+            data_log += [
+                {
+                    "start_time": start_time,
+                    "Tempo": time,
+                    "Saída": output,
+                    "Erro": err.curr,
+                    "Esforço": u.curr,
+                }
+            ]
             prev = time_ns()
         if curr - prev_receive >= RECEIVE_INTERVAL:
             try:
                 ref = get("http://192.168.0.100:8080/reference").json()
-                ref_pan = max(0, min(5, ref.get("ref_pan", 0)*ANGLE_CONSTANT))
+                ref_pan = max(0, min(5, ref.get("ref_pan", 0) * ANGLE_CONSTANT))
             except:
                 pass
             finally:
                 prev_receive = time_ns()
+        if curr - prev_send >= SEND_INTERVAL:
+            send_log(data_log)
+            data_log = []
+            prev_send = time_ns()
