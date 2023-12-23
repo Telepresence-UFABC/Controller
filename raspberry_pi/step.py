@@ -12,6 +12,8 @@ start_time = str(datetime.now())
 SAMPLING_INTERVAL = 5_000_000
 # Run new test every RESET_INTERVAL nanoseconds
 RESET_INTERVAL = 2_000_000_000
+# Stop for STOP_INTERVAL nanoseconds after reset
+STOP_INTERVAL = 1_000_000_000
 # ADC gain set to GAIN
 GAIN = 1
 # Tolerance set to TOLERANCE
@@ -90,9 +92,12 @@ if __name__ == "__main__":
             ]
             prev = time_ns()
         if curr - prev_reset >= RESET_INTERVAL:
+            send_log(data_log)
+            data_log = []
             normal_operation = 0
-            if abs(output) <= TOLERANCE and curr - prev_reset >= 1.5 * RESET_INTERVAL:
+            if (
+                abs(output) <= TOLERANCE
+                and curr - prev_reset >= RESET_INTERVAL + STOP_INTERVAL
+            ):
                 normal_operation = 1
-                send_log(data_log)
-                data_log = []
                 prev_reset = time_ns()
