@@ -10,18 +10,12 @@ START = time_ns()
 start_time = str(datetime.now())
 # Run new iteration every SAMPLING_INTERVAL nanoseconds
 SAMPLING_INTERVAL = 5_000_000
-# Run new test every RESET_INTERVAL nanoseconds
-RESET_INTERVAL = 2_000_000_000
 # Receive new reference every RECEIVE_INTERVAL nanoseconds
 RECEIVE_INTERVAL = 500_000_000
 # Send collected data every SEND_DATA nanoseconds
 SEND_INTERVAL = 2_000_000_000
 # ADC gain set to GAIN
 GAIN = 1
-# Tolerance set to TOLERANCE
-TOLERANCE = 5
-# Enables testing
-TESTING = False
 # 3.3 V to 5 V
 VOLTAGE_CONSTANT = 5 / 3.3
 # 1V every 60 deg
@@ -38,10 +32,8 @@ u = Measure()
 ref_pan = 1.5
 curr = time_ns()
 prev = 0
-prev_reset = 0
 prev_receive = 0
 prev_send = 0
-normal_operation = 1
 data_log = []
 
 adc = ADS1115()
@@ -78,9 +70,8 @@ if __name__ == "__main__":
 
             # Update previous and current values
             err.prev = err.curr
+            err.curr = ref_pan - output
 
-            # ref - output if in normal operation, otherwise reference is set to 0
-            err.curr = ref_pan * normal_operation - output
             u.prev = u.curr
             u.curr = control(err, u)
 

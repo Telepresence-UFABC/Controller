@@ -35,8 +35,19 @@ curr = time_ns()
 prev = 0
 prev_reset = 0
 normal_operation = 1
+data_log = []
+
 
 adc = ADS1115()
+
+
+def send_log(data) -> None:
+    for entry in data:
+        try:
+            post("http://192.168.0.100:8080/log", dumps(entry))
+        except:
+            print("Server is not accessible")
+            continue
 
 
 def adc2voltage(val: int) -> float:
@@ -68,14 +79,20 @@ if __name__ == "__main__":
             u.curr = control(err, u)
 
             h_bridge_write(rpi, PIN_ONE, PIN_TWO, u.curr)
-            data = {"start_time": start_time, "Tempo": time, "Saída": output, "Erro": err.curr, "Esforço": u.curr}
-            try:
-                post("http://192.168.0.100:8080/log", dumps(data))
-            except:
-                print("Server is not accessible")
+            data_log += [
+                {
+                    "start_time": start_time,
+                    "Tempo": time,
+                    "Saída": output,
+                    "Erro": err.curr,
+                    "Esforço": u.curr,
+                }
+            ]
             prev = time_ns()
         if curr - prev_reset >= RESET_INTERVAL:
             normal_operation = 0
-            if abs(output) <= TOLERANCE and curr - prev_reset >= 1.5*RESET_INTERVAL:
+            if abs(output) <= TOLERANCE and curr - prev_reset >= 1.5 * RESET_INTERVAL:
                 normal_operation = 1
+                send_log(data_log)
+                data_log = []
                 prev_reset = time_ns()
