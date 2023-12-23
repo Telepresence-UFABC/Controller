@@ -12,8 +12,6 @@ start_time = str(datetime.now())
 SAMPLING_INTERVAL = 5_000_000
 # Receive new reference every RECEIVE_INTERVAL nanoseconds
 RECEIVE_INTERVAL = 500_000_000
-# Send collected data every SEND_DATA nanoseconds
-SEND_INTERVAL = 2_000_000_000
 # ADC gain set to GAIN
 GAIN = 1
 # 3.3 V to 5 V
