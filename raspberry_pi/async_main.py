@@ -24,6 +24,15 @@ with open("../system_parameters/controller_1.info", "r") as file:
     consts: dict = load(file)
     C1, C2, C3 = consts["c1"], consts["c2"], consts["c3"]
 
+rpi = setup()
+err = Measure()
+u = Measure()
+
+ref_pan = 1.5
+curr = time_ns()
+prev = 0
+prev_receive = 0
+
 adc = ADS1115()
 
 
@@ -40,14 +49,8 @@ def control(err: Measure, u: Measure) -> float:
 
 
 async def main():
-    rpi = setup()
-    err = Measure()
-    u = Measure()
+    global rpi, err, u, ref_pan, curr, prev, prev_receive
 
-    ref_pan = 1.5
-    curr = time_ns()
-    prev = 0
-    prev_receive = 0
     while True:
         curr = time_ns()
 
@@ -57,7 +60,6 @@ async def main():
 
             # Update previous and current values
             err.prev = err.curr
-
             err.curr = ref_pan - output
 
             u.prev = u.curr
@@ -73,7 +75,9 @@ async def main():
             }
 
             try:
-                await send_post_request("http://192.168.0.100:8080/log", dumps(data))
+                asyncio.create_task(
+                    send_post_request("http://192.168.0.100:8080/log", dumps(data))
+                )
             except:
                 print("Could not send logs to server")
 
