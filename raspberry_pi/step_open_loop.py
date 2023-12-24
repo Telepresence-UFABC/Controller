@@ -21,7 +21,7 @@ TOLERANCE = 0.5
 # 3.3 V to 5 V
 VOLTAGE_CONSTANT = 5 / 3.3
 # 1V every 60 deg
-ANGLE_CONSTANT = 5 / 300
+ANGLE_CONSTANT = 300 / 5
 
 # Load controller constants
 with open("../system_parameters/controller_1.info", "r") as file:
@@ -30,9 +30,9 @@ with open("../system_parameters/controller_1.info", "r") as file:
 
 err = Measure()
 u = Measure()
+output = Measure()
 
-ref = 1
-output = 0
+ref = 5
 curr = time_ns()
 prev = 0
 prev_reset = 0
@@ -69,35 +69,32 @@ if __name__ == "__main__":
     while True:
         curr = time_ns()
         if curr - prev >= SAMPLING_INTERVAL:
-            output = analog_read(VOLTAGE_READ_PIN) * VOLTAGE_CONSTANT
+            output.prev = output.curr
+            output.curr = analog_read(VOLTAGE_READ_PIN) * VOLTAGE_CONSTANT
+
+            delta_t = (curr - prev) / 1e9
+            speed = (output.curr - output.prev) * ANGLE_CONSTANT / delta_t
+
             time = (curr - START) / 1e9
 
             # Update previous and current values
             err.prev = err.curr
+            # reference is set to 0
+            err.curr = -output
 
-            # ref - output if in normal operation, otherwise reference is set to 0
-            err.curr = ref * normal_operation - output
             u.prev = u.curr
             u.curr = control(err, u)
 
-            h_bridge_write(rpi, PIN_ONE, PIN_TWO, u.curr)
-            data_log += [
-                {
-                    "start_time": start_time,
-                    "Tempo": time,
-                    "Saída": output,
-                    "Erro": err.curr,
-                    "Esforço": u.curr,
-                }
-            ]
+            h_bridge_write(rpi, PIN_ONE, PIN_TWO, ref if normal_operation else u.curr)
+            data_log += [{"start_time": start_time, "Tempo": time, "Saída": speed}]
             prev = time_ns()
         if curr - prev_reset >= RESET_INTERVAL:
-            send_log(data_log)
-            data_log = []
             normal_operation = 0
             if (
                 abs(output) <= TOLERANCE
                 and curr - prev_reset >= RESET_INTERVAL + STOP_INTERVAL
             ):
+                send_log(data_log)
+                data_log = []
                 normal_operation = 1
                 prev_reset = time_ns()
