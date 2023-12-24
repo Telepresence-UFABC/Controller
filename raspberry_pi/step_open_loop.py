@@ -13,7 +13,7 @@ SAMPLING_INTERVAL = 5_000_000
 # Run new test every RESET_INTERVAL nanoseconds
 RESET_INTERVAL = 2_000_000_000
 # Stop for STOP_INTERVAL nanoseconds after reset
-STOP_INTERVAL = 1_000_000_000
+STOP_INTERVAL = 2_000_000_000
 # ADC gain set to GAIN
 GAIN = 1
 # Tolerance set to TOLERANCE
@@ -35,7 +35,7 @@ output = Measure()
 ref = 5
 curr = time_ns()
 prev = 0
-prev_reset = 0
+prev_reset = time_ns()
 normal_operation = 1
 data_log = []
 
@@ -77,19 +77,27 @@ if __name__ == "__main__":
 
             time = (curr - START) / 1e9
 
-            # Update previous and current values
+            # Update previous and current values, reference is always set to 0
             err.prev = err.curr
-            # reference is set to 0
             err.curr = -output
 
             u.prev = u.curr
             u.curr = control(err, u)
 
+            # reference if normal operation, else move system to 0 position
             h_bridge_write(rpi, PIN_ONE, PIN_TWO, ref if normal_operation else u.curr)
             data_log += [{"start_time": start_time, "Tempo": time, "Saída": speed}]
             prev = time_ns()
+
+        # if RESET_INTERVAL nanoseconds have passed since previous reset
+        # exit normal operation
         if curr - prev_reset >= RESET_INTERVAL:
             normal_operation = 0
+
+            # if motor is close to 0 position and at least STOP_INTERVAL nanoseconds
+            # have elapsed since reset
+            # send logs to server
+            # return to normal operation
             if (
                 abs(output) <= TOLERANCE
                 and curr - prev_reset >= RESET_INTERVAL + STOP_INTERVAL
