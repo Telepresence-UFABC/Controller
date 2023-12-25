@@ -20,9 +20,9 @@ drawing_spec = draw.DrawingSpec(color=(0, 255, 0), circle_radius=1, thickness=1)
 
 face_3d = np.array([            # Posição aproximada dos pontos
     (0.0, 0.0, 0.0),            # NOSE
-    (0.0, -330.0, -65.0),       # CHIN
-    (-225.0, 170.0, -135.0),    # LEFT_EYE
-    (225.0, 170.0, -135.0),     # RIGHT_EYE
+    (0.0, -200.0, -65.0),       # CHIN
+    (-150.0, 170.0, -135.0),    # LEFT_EYE
+    (150.0, 170.0, -135.0),     # RIGHT_EYE
     (-150.0, -150.0, -125.0),   # LEFT_MOUTH
     (150.0, -150.0, -125.0)     # RIGHT_MOUTH
     ], dtype=np.float64)
@@ -35,7 +35,6 @@ camera_matrix = np.array(
      [0, 0, 1]], dtype=np.float64
 )
 dist = []
-
 with mp_face_mesh.FaceMesh() as face_mesh:
     while True:
         ok, frame = cap.read()
@@ -81,7 +80,6 @@ with mp_face_mesh.FaceMesh() as face_mesh:
                 cv2.putText(frame, f"z: {str(np.round(z,2))}", (0, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
                 draw.draw_landmarks(frame, landmarks, mp_face_mesh.FACEMESH_CONTOURS, landmark_drawing_spec=drawing_spec)
-
         cv2.imshow("Video", frame)
         if cv2.waitKey(1) == 27:
             cv2.destroyAllWindows()

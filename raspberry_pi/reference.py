@@ -34,9 +34,9 @@ def get_reference_from_face():
     face_3d = np.array(
         [  # Posição aproximada dos pontos
             (0.0, 0.0, 0.0),  # NOSE
-            (0.0, -330.0, -65.0),  # CHIN
-            (-225.0, 170.0, -135.0),  # LEFT_EYE
-            (225.0, 170.0, -135.0),  # RIGHT_EYE
+            (0.0, -200.0, -65.0),  # CHIN
+            (-150.0, 170.0, -135.0),  # LEFT_EYE
+            (150.0, 170.0, -135.0),  # RIGHT_EYE
             (-150.0, -150.0, -125.0),  # LEFT_MOUTH
             (150.0, -150.0, -125.0),  # RIGHT_MOUTH
         ],
