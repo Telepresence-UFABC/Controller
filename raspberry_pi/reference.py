@@ -64,7 +64,7 @@ def get_reference_from_face():
 
                         face_2d.append((x, y))
 
-                    points_of_interest = np.array(
+                    projection = np.array(
                         [
                             face_2d[Landmark.NOSE],
                             face_2d[Landmark.CHIN],
@@ -76,7 +76,7 @@ def get_reference_from_face():
                         dtype=np.float64,
                     )
                     success, rot_vec, trans_vec = cv2.solvePnP(
-                        face_3d, points_of_interest, camera_matrix, distortion_matrix
+                        face_3d, projection, camera_matrix, distortion_matrix
                     )
                     rotation_matrix, jacobian = cv2.Rodrigues(rot_vec)
                     angles, mtxR, mtxQ, Qx, Qy, Qz = cv2.RQDecomp3x3(rotation_matrix)
