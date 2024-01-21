@@ -2,6 +2,39 @@ const usedAxes = { x: "", y: "" };
 
 const fileList = document.getElementById("file-list");
 
+let scatterChart = new Chart(document.getElementById("chart"), {
+    type: "scatter",
+    data: {
+        datasets: [
+            {
+                label: "Visualização de dados",
+                data: [],
+                backgroundColor: "rgba(75, 192, 192, 0.5)", // Adjust color as needed
+            },
+        ],
+    },
+    options: {
+        scales: {
+            x: {
+                type: "linear",
+                position: "bottom",
+                title: {
+                    display: true,
+                    text: "x",
+                },
+            },
+            y: {
+                type: "linear",
+                position: "left",
+                title: {
+                    display: true,
+                    text: "y",
+                },
+            },
+        },
+    },
+});
+
 async function getFileNames() {
     const data = await fetch("/log_names").then((r) => r.json());
     fileList.innerHTML = "";
@@ -45,6 +78,43 @@ async function plotData(file) {
                     );
                 }, "")}</div>`,
                 confirmButtonText: "Confirmar",
+                didClose: () => {
+                    scatterChart.destroy();
+                    scatterChart = new Chart(document.getElementById("chart"), {
+                        type: "scatter",
+                        data: {
+                            datasets: [
+                                {
+                                    label: "Visualização de dados",
+                                    data: data.map((entry) => {
+                                        return { x: entry[usedAxes.x], y: entry[usedAxes.y] };
+                                    }),
+                                    backgroundColor: "rgba(75, 192, 192, 0.5)",
+                                },
+                            ],
+                        },
+                        options: {
+                            scales: {
+                                x: {
+                                    type: "linear",
+                                    position: "bottom",
+                                    title: {
+                                        display: true,
+                                        text: usedAxes.x,
+                                    },
+                                },
+                                y: {
+                                    type: "linear",
+                                    position: "left",
+                                    title: {
+                                        display: true,
+                                        text: usedAxes.y,
+                                    },
+                                },
+                            },
+                        },
+                    });
+                },
             }),
     });
 }

@@ -20,3 +20,7 @@ main {
     justify-content: center;
     align-items: center;
 }
+
+.file-name {
+    cursor: pointer;
+}
