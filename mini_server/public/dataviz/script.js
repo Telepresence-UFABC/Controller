@@ -55,7 +55,7 @@ async function getDataFromFile(file) {
 
 async function plotData(file) {
     const data = await getDataFromFile(file);
-    const columns = Object.keys(data[0]);
+    const columns = Object.keys(data.data[0]);
     usedAxes.x = columns[0];
     usedAxes.y = columns[1];
 
@@ -86,7 +86,7 @@ async function plotData(file) {
                             datasets: [
                                 {
                                     label: "Visualização de dados",
-                                    data: data.map((entry) => {
+                                    data: data.data.map((entry) => {
                                         return { x: entry[usedAxes.x], y: entry[usedAxes.y] };
                                     }),
                                     backgroundColor: "rgba(75, 192, 192, 0.5)",

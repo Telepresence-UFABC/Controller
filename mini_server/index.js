@@ -184,7 +184,7 @@ app.get("/get_log", function (req, res) {
                 }, {})
             );
         }
-        res.json(parsedCsv);
+        res.json({ data: parsedCsv });
     });
 });
 
