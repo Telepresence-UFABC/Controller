@@ -2,7 +2,7 @@ import express from "express";
 import { WebSocket, WebSocketServer } from "ws";
 import { v4 } from "uuid";
 import { spawn } from "child_process";
-import { appendFile, existsSync, writeFileSync } from "fs";
+import { appendFile, existsSync, writeFileSync, readdir, readFile } from "fs";
 import { networkInterfaces } from "os";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
@@ -69,7 +69,7 @@ wsServer.on("connection", function (connection) {
         switch (message.type) {
             case "auto_pose":
                 if (state.auto) {
-                    console.log(message);
+                    // console.log(message);
 
                     state.pan = message.pan;
                     state.tilt = message.tilt;
@@ -79,7 +79,7 @@ wsServer.on("connection", function (connection) {
                 break;
             case "manual_pose":
                 if (!state.auto) {
-                    console.log(message);
+                    // console.log(message);
 
                     state.pan = message.pan;
                     state.tilt = message.tilt;
@@ -88,7 +88,7 @@ wsServer.on("connection", function (connection) {
                 }
                 break;
             case "auto_state":
-                console.log(message);
+                // console.log(message);
 
                 state.auto = message.auto;
 
@@ -153,6 +153,39 @@ function logToFile(message) {
 // Homepage
 app.get("/", function (req, res) {
     res.render("pages/index");
+});
+
+// DataViz
+app.get("/dataviz", function (req, res) {
+    res.render("pages/dataviz");
+});
+
+// Log file names
+app.get("/log_names", function (req, res) {
+    let fileNames;
+    readdir(SETUP.LOG_PATH, (err, files) => {
+        fileNames = files.filter((file) => file.endsWith("csv"));
+        res.json(fileNames);
+    });
+});
+
+// Data from çpg file
+app.get("/get_log", function (req, res) {
+    const fileName = req.query.file;
+    readFile(join(SETUP.LOG_PATH, fileName), (err, data) => {
+        const csv = data.toString().split("\n");
+        const header = csv[0].split(",");
+        const parsedCsv = [];
+        for (const line of csv.slice(1)) {
+            const splitLine = line.split(",");
+            parsedCsv.push(
+                splitLine.reduce((acc, curr, i) => {
+                    return { ...acc, [header[i]]: Number(curr) };
+                }, {})
+            );
+        }
+        res.json(parsedCsv);
+    });
 });
 
 const poseEstimation = spawn("python3", [SETUP.POSE_ESTIMATION_PROGRAM]);

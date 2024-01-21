@@ -1,0 +1,22 @@
+body {
+    text-align: center;
+    background-color: #f6f6f6;
+    font-family: sans-serif;
+}
+
+header {
+    background-color: #adadad;
+    color: #f6f6f6;
+    padding: 10px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}

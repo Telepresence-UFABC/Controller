@@ -9,6 +9,9 @@ header {
     color: #f6f6f6;
     padding: 10px;
     border-radius: 10px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
 }
 
 main {
