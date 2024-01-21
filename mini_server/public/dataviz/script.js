@@ -112,6 +112,7 @@ async function plotData(file) {
                                     },
                                 },
                             },
+                            plugins: { zoom: { zoom: { wheel: { enabled: true } } } },
                         },
                     });
                 },
