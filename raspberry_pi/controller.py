@@ -1,5 +1,3 @@
-import asyncio
-from aiohttp import ClientSession
 from pigpio import pi
 
 V_OUT = 5
@@ -58,15 +56,3 @@ def h_bridge_write(rpi: pi, pin_one: int, pin_two: int, value: float) -> None:
     else:
         rpi.set_PWM_dutycycle(pin_one, 0)
         rpi.set_PWM_dutycycle(pin_two, 0)
-
-
-async def send_post_request(url, data):
-    async with ClientSession() as session:
-        async with session.post(url, data=data) as response:
-            return await response.text()
-
-
-async def send_get_request(url):
-    async with ClientSession() as session:
-        async with session.get(url) as response:
-            return await response.json()
