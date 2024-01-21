@@ -1,0 +1,95 @@
+body {
+    text-align: center;
+    background-color: #f6f6f6;
+    font-family: sans-serif;
+}
+
+header {
+    background-color: #adadad;
+    color: #f6f6f6;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+main img,
+main div {
+    margin: 10px;
+}
+
+#video-player {
+    width: 640px;
+    height: 480px;
+    border: 1px solid black;
+}
+
+input[type="checkbox"] {
+    display: none;
+}
+
+.checkbox-label {
+    cursor: pointer;
+    display: inline-block;
+    padding: 10px;
+    background-color: #a1a1a1;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.checkbox-label:hover {
+    background-color: #707070;
+}
+
+input[type="checkbox"]:checked + label {
+    background-color: red;
+}
+
+.sliders {
+    display: grid;
+    grid-template-columns: auto auto;
+    justify-content: space-around;
+}
+
+.slider-container {
+    width: 220px;
+    margin: 0px;
+    background-color: #f6f6f6;
+    border-radius: 10px;
+    border: 3px solid gray;
+    display: grid;
+    grid-template-rows: auto auto;
+    text-align: center;
+}
+
+.slider-inner-container {
+    display: grid;
+    grid-template-columns: auto auto;
+    justify-content: space-between;
+    align-content: center;
+    margin: 0 5px 0 5px;
+}
+
+.slider-text {
+    font-family: sans-serif;
+    font-weight: bold;
+    color: gray;
+    margin: 0;
+}
+
+.slider {
+    margin: 0;
+}
+
+.slider-label {
+    margin: 0;
+    font-size: 1.75em;
+    color: gray;
+    font-family: sans-serif;
+    font-weight: bold;
+}

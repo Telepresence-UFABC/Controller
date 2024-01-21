@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <link rel="stylesheet" href="/index/style.css" />
+        <script defer src="/frontend_setup/setup.js"></script>
+        <script defer src="/index/script.js"></script>
+    </head>
+
+    <body>
+        <header>
+            <h1>Controle de câmera referenciado pela pose do usuário</h1>
+        </header>
+        <main>
+            <img id="video-player" alt="Vídeo" />
+            <div>
+                <input type="checkbox" id="auto" />
+                <label class="checkbox-label" for="auto">
+                    <img src="/img/video_on.svg" alt="Obtenção automática da pose" />
+                </label>
+                <p>Obtenção automática da pose</p>
+            </div>
+            <div class="sliders">
+                <div class="slider-container">
+                    <h2 class="slider-text">Controle pan</h2>
+                    <div class="slider-inner-container">
+                        <input class="slider" type="range" min="-90" max="90" id="pan" />
+                        <label for="pan" class="slider-label" id="pan-label">0°</label>
+                    </div>
+                </div>
+                <div class="slider-container">
+                    <h2 class="slider-text">Controle tilt</h2>
+                    <div class="slider-inner-container">
+                        <input class="slider" type="range" min="-90" max="90" id="tilt" />
+                        <label for="tilt" class="slider-label" id="tilt-label">0°</label>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </body>
+</html>
