@@ -1,8 +1,10 @@
-from requests import get, post
 from datetime import datetime
-from time import time_ns
-from json import load, dumps
+from time import time_ns, sleep
+from json import load, loads, dumps
 from Adafruit_ADS1x15 import ADS1115
+from threading import Thread
+from websockets.sync.client import connect
+from websockets.exceptions import InvalidURI, InvalidHandshake, ConnectionClosedError
 from controller import *
 
 VOLTAGE_READ_PIN = 0
@@ -24,13 +26,20 @@ with open("../system_parameters/controller_1.info", "r") as file:
     consts: dict = load(file)
     C1, C2, C3 = consts["c1"], consts["c2"], consts["c3"]
 
+with open(
+    "../mini_server/public/server_setup/setup.json",
+    "r",
+) as file:
+    SETUP: dict = load(file)
+    SERVER_IP: str = SETUP["SERVER_IP"]
+
 err = Measure()
 u = Measure()
 
-ref_pan = 1.5
+pan = 1.5
+tilt = 0
 curr = time_ns()
 prev = 0
-prev_receive = 0
 
 adc = ADS1115()
 
@@ -47,42 +56,67 @@ def control(err: Measure, u: Measure) -> float:
     return C1 * u.prev + C2 * err.curr + C3 * err.prev
 
 
-if __name__ == "__main__":
-    rpi = setup()
+def listen() -> None:
+    global pan, tilt
     while True:
-        curr = time_ns()
-        if curr - prev >= SAMPLING_INTERVAL:
-            output = analog_read(VOLTAGE_READ_PIN) * VOLTAGE_CONSTANT
-            time = (curr - START) / 1e9
+        try:
+            with connect(f"ws://{SERVER_IP}:3000") as websocket:
+                while True:
+                    message = loads(websocket.recv())
+                    if (
+                        message["type"] == "manual_pose"
+                        or message["type"] == "auto_pose"
+                    ):
+                        pan = max(0, min(5, message["pan"] * ANGLE_CONSTANT))
+                        tilt = max(0, min(5, message["tilt"] * ANGLE_CONSTANT))
+        except (InvalidURI, OSError, InvalidHandshake, ConnectionClosedError) as e:
+            print(f"Could not connect to server, error: {e}")
+            sleep(2)
 
-            # Update previous and current values
-            err.prev = err.curr
-            err.curr = ref_pan - output
 
-            u.prev = u.curr
-            u.curr = control(err, u)
+def main():
+    while True:
+        try:
+            with connect(f"ws://{SERVER_IP}:3000") as websocket:
+                rpi = setup()
+                while True:
+                    curr = time_ns()
+                    if curr - prev >= SAMPLING_INTERVAL:
+                        output = analog_read(VOLTAGE_READ_PIN) * VOLTAGE_CONSTANT
+                        time = (curr - START) / 1e9
 
-            h_bridge_write(rpi, PIN_ONE, PIN_TWO, u.curr)
+                        # Update previous and current values
+                        err.prev = err.curr
+                        err.curr = pan - output
 
-            data = {
-                "id": id,
-                "Tempo": time,
-                "Saída": output,
-                "Erro": err.curr,
-                "Esforço": u.curr,
-            }
+                        u.prev = u.curr
+                        u.curr = control(err, u)
 
-            try:
-                post("http://192.168.0.100:8080/log", dumps(data))
-            except:
-                print("Could not send logs to server")
+                        h_bridge_write(rpi, PIN_ONE, PIN_TWO, u.curr)
 
-            prev = time_ns()
-        if curr - prev_receive >= RECEIVE_INTERVAL:
-            try:
-                ref = get("http://192.168.0.100:8080/reference").json()
-                ref_pan = max(0, min(5, ref.get("ref_pan", 0) * ANGLE_CONSTANT))
-            except:
-                print("Could not update reference")
-            finally:
-                prev_receive = time_ns()
+                        websocket.send(
+                            dumps(
+                                {
+                                    "type": "log",
+                                    "data": {
+                                        "id": id,
+                                        "Tempo": time,
+                                        "Saída": output,
+                                        "Erro": err.curr,
+                                        "Esforço": u.curr,
+                                    },
+                                }
+                            )
+                        )
+
+                        prev = time_ns()
+        except (InvalidURI, OSError, InvalidHandshake, ConnectionClosedError) as e:
+            print(f"Could not connect to server, error: {e}")
+            sleep(2)
+
+
+listen_thread = Thread(target=listen)
+listen_thread.start()
+
+main_thread = Thread(target=main)
+main_thread.start()

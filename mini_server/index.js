@@ -2,7 +2,7 @@ import express from "express";
 import { WebSocket, WebSocketServer } from "ws";
 import { v4 } from "uuid";
 import { spawn } from "child_process";
-import { writeFileSync } from "fs";
+import { appendFile, existsSync, writeFileSync } from "fs";
 import { networkInterfaces } from "os";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
@@ -24,6 +24,7 @@ const port = 3000;
 const SETUP = {
     SERVER_IP: ip,
     POSE_ESTIMATION_PROGRAM: join(__dirname, "pose_estimation/pose_estimation.py"),
+    LOG_PATH: join(__dirname, "../logs"),
     WIDTH: 640,
     HEIGHT: 480,
 };
@@ -93,6 +94,8 @@ wsServer.on("connection", function (connection) {
 
                 distributeData(message);
                 break;
+            case "log":
+                logToFile(message);
             case "video":
                 distributeData(message);
                 break;
@@ -129,6 +132,20 @@ function distributeData(json) {
 function handleDisconnect(userId) {
     console.log(`${userId} disconnected.`);
     delete clients[userId];
+}
+
+function logToFile(message) {
+    const path = join(SETUP.LOG_PATH, `${message.data.id}.csv`);
+    const header = Object.keys(message.data).filter((k) => k !== "id");
+
+    if (!existsSync(path)) {
+        appendFile(path, header.join(",") + "\n", (err) => {
+            if (err) console.log("Couldn't log to file");
+        });
+    }
+    appendFile(path, header.map((k) => message.data[k]).join(",") + "\n", (err) => {
+        if (err) console.log("Couldn't log to file");
+    });
 }
 
 // GET

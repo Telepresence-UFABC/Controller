@@ -3,7 +3,7 @@ from threading import Thread
 from flask import Flask, request
 from mediapipe import solutions
 from json import loads
-
+from os.path import join, abspath
 
 app = Flask(__name__)
 ref_pan = 150
@@ -23,7 +23,6 @@ def get_reference_from_face():
         RIGHT_MOUTH = 291
 
     cap = cv2.VideoCapture(0)
-    cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
     WIDTH, HEIGHT = (
         cap.get(cv2.CAP_PROP_FRAME_WIDTH),
         cap.get(cv2.CAP_PROP_FRAME_HEIGHT),
@@ -80,7 +79,7 @@ def get_reference_from_face():
                     )
                     rotation_matrix, jacobian = cv2.Rodrigues(rot_vec)
                     angles, mtxR, mtxQ, Qx, Qy, Qz = cv2.RQDecomp3x3(rotation_matrix)
-                    ref_tilt = angles[0] - np.sign(angles[0]) * 180
+                    ref_tilt = angles[0] if angles[0] >= 0 else angles[0] + 360
                     ref_pan = angles[1] + 150
                     z = angles[2]
 
@@ -95,7 +94,7 @@ def reference() -> dict[str, float]:
 def log():
     try:
         body: dict[str, float] = loads(request.data)
-        file_name = f"/home/nikolas/Documents/GitHub/Controller/raspberry_pi/logs/{body['id']}.csv"
+        file_name = abspath(join(__file__, f"../../logs/{body['id']}.csv"))
         header = ",".join([key for key in body.keys() if key != "id"]) + "\n"
         data = ",".join([str(v) for k, v in body.items() if k != "id"]) + "\n"
         if not os.path.isfile(file_name):

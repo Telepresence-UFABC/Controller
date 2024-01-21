@@ -1,6 +1,7 @@
 {
     "SERVER_IP": "192.168.15.189",
     "POSE_ESTIMATION_PROGRAM": "/home/nikolas/Documents/GitHub/Controller/mini_server/pose_estimation/pose_estimation.py",
+    "LOG_PATH": "/home/nikolas/Documents/GitHub/Controller/logs",
     "WIDTH": 640,
     "HEIGHT": 480
 }

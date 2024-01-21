@@ -1,8 +1,9 @@
-from requests import post
 from datetime import datetime
-from time import time_ns
+from time import time_ns, sleep
 from json import load, dumps
 from Adafruit_ADS1x15 import ADS1115
+from websockets.sync.client import connect
+from websockets.exceptions import InvalidURI, InvalidHandshake, ConnectionClosedError
 from controller import *
 
 VOLTAGE_READ_PIN = 0
@@ -28,6 +29,13 @@ with open("../system_parameters/controller_1.info", "r") as file:
     consts: dict = load(file)
     C1, C2, C3 = consts["c1"], consts["c2"], consts["c3"]
 
+with open(
+    "../mini_server/public/server_setup/setup.json",
+    "r",
+) as file:
+    SETUP: dict = load(file)
+    SERVER_IP: str = SETUP["SERVER_IP"]
+
 err = Measure()
 u = Measure()
 output = Measure()
@@ -38,17 +46,7 @@ prev = 0
 prev_reset = time_ns()
 normal_operation = 1
 
-
 adc = ADS1115()
-
-
-def send_log(data) -> None:
-    for entry in data:
-        try:
-            post("http://192.168.0.100:8080/log", dumps(entry))
-        except:
-            print("Server is not accessible")
-            continue
 
 
 def adc2voltage(val: int) -> float:
@@ -63,49 +61,57 @@ def control(err: Measure, u: Measure) -> float:
     return C1 * u.prev + C2 * err.curr + C3 * err.prev
 
 
-if __name__ == "__main__":
-    rpi = setup()
-    while True:
-        curr = time_ns()
-        if curr - prev >= SAMPLING_INTERVAL:
-            output.prev = output.curr
-            output.curr = analog_read(VOLTAGE_READ_PIN) * VOLTAGE_CONSTANT
+while True:
+    try:
+        with connect(f"ws://{SERVER_IP}:3000") as websocket:
+            rpi = setup()
+            while True:
+                curr = time_ns()
+                if curr - prev >= SAMPLING_INTERVAL:
+                    output.prev = output.curr
+                    output.curr = analog_read(VOLTAGE_READ_PIN) * VOLTAGE_CONSTANT
 
-            # Update previous and current values
-            err.prev = err.curr
-            err.curr = ref*normal_operation - output.curr
+                    # Update previous and current values
+                    err.prev = err.curr
+                    err.curr = ref * normal_operation - output.curr
 
-            u.prev = u.curr
-            u.curr = control(err, u)
+                    u.prev = u.curr
+                    u.curr = control(err, u)
 
-            # reference if normal operation, else move system to 0 position
-            h_bridge_write(rpi, PIN_ONE, PIN_TWO, u.curr)
-            data = {
-                "id": id,
-                "Tempo": (curr-prev_reset)/ 1e9,
-                "Saída": output.curr,
-                "Erro": err.curr,
-                "Esforço": u.curr,
-            }
+                    # reference if normal operation, else move system to 0 position
+                    h_bridge_write(rpi, PIN_ONE, PIN_TWO, u.curr)
 
-            try:
-                post("http://192.168.0.100:8080/log", dumps(data))
-            except:
-                print("Could not send logs to server")
+                    websocket.send(
+                        dumps(
+                            {
+                                "type": "log",
+                                "data": {
+                                    "id": id,
+                                    "Tempo": (curr - prev_reset) / 1e9,
+                                    "Saída": output.curr,
+                                    "Erro": err.curr,
+                                    "Esforço": u.curr,
+                                },
+                            }
+                        )
+                    )
 
-            prev = time_ns()
+                    prev = time_ns()
 
-        # if RESET_INTERVAL nanoseconds have passed since previous reset
-        # exit normal operation
-        if curr - prev_reset >= RESET_INTERVAL:
-            normal_operation = 0
+                # if RESET_INTERVAL nanoseconds have passed since previous reset
+                # exit normal operation
+                if curr - prev_reset >= RESET_INTERVAL:
+                    normal_operation = 0
 
-            # if motor is close to 0 position and at least STOP_INTERVAL nanoseconds
-            # have elapsed since reset
-            # return to normal operation
-            if (
-                abs(output.curr) <= TOLERANCE
-                and curr - prev_reset >= RESET_INTERVAL + STOP_INTERVAL
-            ):
-                normal_operation = 1
-                prev_reset = time_ns()
+                    # if motor is close to 0 position and at least STOP_INTERVAL nanoseconds
+                    # have elapsed since reset
+                    # return to normal operation
+                    if (
+                        abs(output.curr) <= TOLERANCE
+                        and curr - prev_reset >= RESET_INTERVAL + STOP_INTERVAL
+                    ):
+                        normal_operation = 1
+                        prev_reset = time_ns()
+    except (InvalidURI, OSError, InvalidHandshake, ConnectionClosedError) as e:
+        print(f"Could not connect to server, error: {e}")
+        sleep(2)
