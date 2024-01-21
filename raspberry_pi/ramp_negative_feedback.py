@@ -7,7 +7,7 @@ from controller import *
 
 VOLTAGE_READ_PIN = 0
 START = time_ns()
-start_time = str(datetime.now())
+id = f"ramp_{str(datetime.now())}"
 # Run new iteration every SAMPLING_INTERVAL nanoseconds
 SAMPLING_INTERVAL = 5_000_000
 # Stop for STOP_INTERVAL nanoseconds after reset
@@ -93,7 +93,7 @@ if __name__ == "__main__":
             )
             data_log += [
                 {
-                    "start_time": start_time,
+                    "id": id,
                     "Tempo": time,
                     "Saída": output * ANGLE_CONSTANT,
                 }

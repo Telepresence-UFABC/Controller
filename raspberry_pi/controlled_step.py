@@ -7,7 +7,7 @@ from controller import *
 
 VOLTAGE_READ_PIN = 0
 START = time_ns()
-start_time = str(datetime.now())
+id = f"controlled_step_{str(datetime.now())}"
 # Run new iteration every SAMPLING_INTERVAL nanoseconds
 SAMPLING_INTERVAL = 5_000_000
 # Run new test every RESET_INTERVAL nanoseconds
@@ -81,7 +81,7 @@ if __name__ == "__main__":
             # reference if normal operation, else move system to 0 position
             h_bridge_write(rpi, PIN_ONE, PIN_TWO, u.curr)
             data = {
-                "start_time": start_time,
+                "id": id,
                 "Tempo": (curr-prev_reset)/ 1e9,
                 "Saída": output.curr,
                 "Erro": err.curr,

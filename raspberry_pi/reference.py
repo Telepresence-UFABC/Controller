@@ -95,9 +95,9 @@ def reference() -> dict[str, float]:
 def log():
     try:
         body: dict[str, float] = loads(request.data)
-        file_name = f"/home/nikolas/Documents/GitHub/Controller/raspberry_pi/logs/{body['start_time']}.csv"
-        header = ",".join([key for key in body.keys() if key != "start_time"]) + "\n"
-        data = ",".join([str(v) for k, v in body.items() if k != "start_time"]) + "\n"
+        file_name = f"/home/nikolas/Documents/GitHub/Controller/raspberry_pi/logs/{body['id']}.csv"
+        header = ",".join([key for key in body.keys() if key != "id"]) + "\n"
+        data = ",".join([str(v) for k, v in body.items() if k != "id"]) + "\n"
         if not os.path.isfile(file_name):
             with open(file_name, "w+") as file:
                 file.write(header)
