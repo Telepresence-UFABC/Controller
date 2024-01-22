@@ -75,6 +75,7 @@ def listen() -> None:
 
 
 def main():
+    global C1, C2, C3, err, u, pan, tilt, curr, prev, adc
     while True:
         try:
             with connect(f"ws://{SERVER_IP}:3000") as websocket:

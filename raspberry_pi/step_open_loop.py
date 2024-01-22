@@ -78,7 +78,7 @@ while True:
 
                     # Update previous and current values, reference is always set to 0
                     err.prev = err.curr
-                    err.curr = -output
+                    err.curr = -output.curr
 
                     u.prev = u.curr
                     u.curr = control(err, u)
@@ -108,7 +108,7 @@ while True:
                     # send logs to server
                     # return to normal operation
                     if (
-                        abs(output) <= TOLERANCE
+                        abs(output.curr) <= TOLERANCE
                         and curr - prev_reset >= RESET_INTERVAL + STOP_INTERVAL
                     ):
                         normal_operation = 1
