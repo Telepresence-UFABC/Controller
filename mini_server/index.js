@@ -190,6 +190,10 @@ app.get("/get_log", function (req, res) {
 
 const poseEstimation = spawn("python3", [SETUP.POSE_ESTIMATION_PROGRAM]);
 
+poseEstimation.stderr.on("data", (data) => {
+    console.log(`[POSE_ESTIMATION]: ${data}`);
+});
+
 process.on("SIGINT", () => {
     console.log("Server is killing subprocesses before terminating");
     poseEstimation.kill();

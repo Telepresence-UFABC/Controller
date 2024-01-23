@@ -84,13 +84,13 @@ while True:
                             angles, mtxR, mtxQ, Qx, Qy, Qz = cv2.RQDecomp3x3(
                                 rotation_matrix
                             )
-                            tilt = int(
-                                angles[0] - 180 if angles[0] >= 0 else angles[0] + 180
-                            )
-                            pan = int(angles[1])
-                            z = angles[2]
+                            tilt = int(angles[0] + (330 if angles[0] < 0 else -30))
+                            pan = int(angles[1]) + 150
+                            z = int(angles[2])
 
-                    websocket.send(dumps({"type": "auto_pose", "pan": pan, "tilt": tilt}))
+                    websocket.send(
+                        dumps({"type": "auto_pose", "pan": pan, "tilt": tilt})
+                    )
 
                     cv2.putText(
                         frame,
