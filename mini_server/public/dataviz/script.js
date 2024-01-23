@@ -1,7 +1,7 @@
 const usedAxes = { x: "", y: "" };
 
 const fileList = document.getElementById("file-list");
-
+const chartColor = "rgba(70, 130, 180, 0.8)";
 let scatterChart = new Chart(document.getElementById("chart"), {
     type: "scatter",
     data: {
@@ -9,7 +9,7 @@ let scatterChart = new Chart(document.getElementById("chart"), {
             {
                 label: "Visualização de dados",
                 data: [],
-                backgroundColor: "rgba(75, 192, 192, 0.5)", // Adjust color as needed
+                backgroundColor: chartColor,
             },
         ],
     },
@@ -89,7 +89,7 @@ async function plotData(file) {
                                     data: data.data.map((entry) => {
                                         return { x: entry[usedAxes.x], y: entry[usedAxes.y] };
                                     }),
-                                    backgroundColor: "rgba(75, 192, 192, 0.5)",
+                                    backgroundColor: chartColor,
                                 },
                             ],
                         },

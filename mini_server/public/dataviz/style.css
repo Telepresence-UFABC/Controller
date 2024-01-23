@@ -5,8 +5,8 @@ body {
 }
 
 header {
-    background-color: #adadad;
-    color: #f6f6f6;
+    background-color: rgba(112, 128, 144, 0.2);
+    color: rgba(112, 128, 144, 0.6);
     padding: 10px;
     border-radius: 10px;
     display: flex;
@@ -16,11 +16,34 @@ header {
 
 main {
     display: flex;
-    flex-direction: column;
-    justify-content: center;
+    justify-content: space-around;
     align-items: center;
 }
 
 .file-name {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: rgba(112, 128, 144, 0.8);
     cursor: pointer;
+    transition: 250ms;
+    text-align: left;
+}
+
+.file-name:hover {
+    color: rgba(112, 128, 144, 1);
+}
+
+#chart {
+    width: 50vw;
+}
+
+a {
+    text-decoration: none;
+    font-size: 2em;
+    color: rgba(112, 128, 144, 0.6);
+    transition: 250ms;
+}
+
+a:hover {
+    color: rgba(112, 128, 144, 0.8);
 }
