@@ -61,14 +61,18 @@ def listen() -> None:
     while True:
         try:
             with connect(f"ws://{SERVER_IP}:3000") as websocket:
+                websocket.send(
+                    dumps(
+                        {
+                            "type": "messages",
+                            "messages": ["pose"]
+                        }
+                    )
+                )
                 while True:
                     message = loads(websocket.recv())
-                    if (
-                        message["type"] == "manual_pose"
-                        or message["type"] == "auto_pose"
-                    ):
-                        pan = max(0, min(5, message["pan"] * ANGLE_CONSTANT))
-                        tilt = max(0, min(5, message["tilt"] * ANGLE_CONSTANT))
+                    pan = max(0, min(5, message["pan"] * ANGLE_CONSTANT))
+                    tilt = max(0, min(5, message["tilt"] * ANGLE_CONSTANT))
         except (InvalidURI, OSError, InvalidHandshake, ConnectionClosedError) as e:
             print(f"Could not connect to server, error: {e}")
             sleep(2)

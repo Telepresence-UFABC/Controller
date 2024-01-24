@@ -6,11 +6,17 @@ const state = {
     videoPlayer = document.querySelector("#video-player"),
     websocket = new WebSocket(`ws://${SERVER_IP}:3000`);
 
+websocket.addEventListener("open", (event)=>{
+    websocket.send(JSON.stringify(
+        {
+            type: "messages",
+            messages: ["pose", "video", "auto_state"]}))
+})
+
 websocket.addEventListener("message", (event) => {
     const message = JSON.parse(event.data);
     switch (message.type) {
-        case "auto_pose":
-        case "manual_pose":
+        case "pose":
             state.pan = message.pan;
             state.tilt = message.tilt;
             updateSliders(message);

@@ -23,8 +23,8 @@ class Landmark:
     RIGHT_EYE = 263
     RIGHT_MOUTH = 291
 
-pan = 150
-tilt = 150
+pan = 0
+tilt = 0
 z = 0
 cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, WIDTH)
@@ -86,9 +86,16 @@ while True:
                             angles, mtxR, mtxQ, Qx, Qy, Qz = cv2.RQDecomp3x3(
                                 rotation_matrix
                             )
-                            tilt = int(angles[0] + (330 if angles[0] < 0 else -30))
-                            pan = int(angles[1]) + 150
+                            tilt = int(angles[0] + (270 if angles[0] < 0 else -90))
+                            pan = int(angles[1]) + 90
                             z = int(angles[2])
+
+                            draw.draw_landmarks(
+                                frame,
+                                landmarks,
+                                mp_face_mesh.FACEMESH_CONTOURS,
+                                landmark_drawing_spec=drawing_spec,
+                            )
 
                     websocket.send(
                         dumps({"type": "auto_pose", "pan": pan, "tilt": tilt})
@@ -120,12 +127,6 @@ while True:
                         1,
                         (0, 0, 255),
                         2,
-                    )
-                    draw.draw_landmarks(
-                        frame,
-                        landmarks,
-                        mp_face_mesh.FACEMESH_CONTOURS,
-                        landmark_drawing_spec=drawing_spec,
                     )
                     ok, video_buffer = cv2.imencode(".jpg", frame)
                     frame = base64.b64encode(video_buffer).decode("utf-8")

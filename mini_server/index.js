@@ -59,7 +59,7 @@ const server = app.listen(port);
 // Handling de request do servidor soquete
 wsServer.on("connection", function (connection) {
     const userId = v4();
-    clients[userId] = connection;
+    clients[userId] = { connection, messages: [] };
     console.log("Server: Connection established");
 
     connection.on("close", () => handleDisconnect(userId));
@@ -67,29 +67,34 @@ wsServer.on("connection", function (connection) {
     connection.on("message", function (message) {
         message = JSON.parse(message.toString());
         switch (message.type) {
+            case "messages":
+                clients[userId].messages = message.messages
+                break;
             case "auto_pose":
                 if (state.auto) {
-                    // console.log(message);
-
                     state.pan = message.pan;
                     state.tilt = message.tilt;
 
-                    distributeData(message);
+                    distributeData({
+                        type: "pose",
+                        pan: state.pan,
+                        tilt: state.tilt
+                    });
                 }
                 break;
             case "manual_pose":
                 if (!state.auto) {
-                    // console.log(message);
-
                     state.pan = message.pan;
                     state.tilt = message.tilt;
 
-                    distributeData(message);
+                    distributeData({
+                        type: "pose",
+                        pan: state.pan,
+                        tilt: state.tilt
+                    });
                 }
                 break;
             case "auto_state":
-                // console.log(message);
-
                 state.auto = message.auto;
 
                 distributeData(message);
@@ -120,11 +125,11 @@ server.on("upgrade", (req, socket, head) => {
 const clients = {};
 
 // envia um arquivo json para todos os usuarios conectados ao servidor ws
-function distributeData(json) {
-    const data = JSON.stringify(json);
+function distributeData(message) {
+    const data = JSON.stringify(message);
     Object.values(clients).forEach((client) => {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(data);
+        if (client.connection.readyState === WebSocket.OPEN && client.messages.includes(message.type)) {
+            client.connection.send(data);
         }
     });
 }
