@@ -109,9 +109,6 @@ wsServer.on("connection", function (connection) {
                 break;
         }
     });
-
-    distributeData({ type: "pose", pan: state.pan, tilt: state.tilt });
-    distributeData({ type: "auto_state", auto: state.auto });
 });
 
 // Mudanca de protocolo de http para ws
@@ -204,3 +201,9 @@ process.on("SIGINT", () => {
     poseEstimation.kill();
     process.exit();
 });
+
+// Send current state to subscribers every few seconds
+setTimeout(()=>{
+    distributeData({ type: "pose", pan: state.pan, tilt: state.tilt });
+    distributeData({ type: "auto_state", auto: state.auto });
+}, 5000)
