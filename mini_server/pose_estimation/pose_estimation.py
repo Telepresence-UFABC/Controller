@@ -23,7 +23,9 @@ class Landmark:
     RIGHT_EYE = 263
     RIGHT_MOUTH = 291
 
-
+pan = 150
+tilt = 150
+z = 0
 cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, WIDTH)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, HEIGHT)
