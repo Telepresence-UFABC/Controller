@@ -21,7 +21,6 @@ main {
 }
 
 .file-name {
-    font-size: 1.5em;
     font-weight: bold;
     color: rgba(112, 128, 144, 0.8);
     cursor: pointer;
