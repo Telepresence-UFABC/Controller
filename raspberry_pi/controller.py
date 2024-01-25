@@ -3,6 +3,8 @@ from pigpio import pi
 V_OUT = 5
 PIN_ONE = 17
 PIN_TWO = 27
+PIN_THREE = 23
+PIN_FOUR = 24
 PWM_FREQUENCY = 1_000
 PWM_MAX_RANGE = 32767
 

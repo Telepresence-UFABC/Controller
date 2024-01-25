@@ -7,7 +7,9 @@ from websockets.sync.client import connect
 from websockets.exceptions import InvalidURI, InvalidHandshake, ConnectionClosedError
 from controller import *
 
-VOLTAGE_READ_PIN = 0
+PAN_READ_PIN = 0
+TILT_READ_PIN = 1
+
 START = time_ns()
 id = f"main_{str(datetime.now())}"
 # Run new iteration every SAMPLING_INTERVAL nanoseconds
@@ -24,7 +26,11 @@ ANGLE_CONSTANT = 5 / 300
 # Load controller constants
 with open("../system_parameters/controller_1.info", "r") as file:
     consts: dict = load(file)
-    C1, C2, C3 = consts["c1"], consts["c2"], consts["c3"]
+    C1_PAN, C2_PAN, C3_PAN = consts["c1"], consts["c2"], consts["c3"]
+
+with open("../system_parameters/controller_1.info", "r") as file:
+    consts: dict = load(file)
+    C1_TILT, C2_TILT, C3_TILT = consts["c1"], consts["c2"], consts["c3"]
 
 with open(
     "../mini_server/public/server_setup/setup.json",
@@ -33,11 +39,14 @@ with open(
     SETUP: dict = load(file)
     SERVER_IP: str = SETUP["SERVER_IP"]
 
-err = Measure()
-u = Measure()
+err_pan = Measure()
+u_pan = Measure()
+
+err_tilt = Measure()
+u_tilt = Measure()
 
 pan = 1.5
-tilt = 0
+tilt = 1.5
 curr = time_ns()
 prev = 0
 
@@ -52,8 +61,8 @@ def analog_read(pin: int = 0) -> float:
     return adc2voltage(adc.read_adc(pin, gain=GAIN))
 
 
-def control(err: Measure, u: Measure) -> float:
-    return C1 * u.prev + C2 * err.curr + C3 * err.prev
+def control(err: Measure, u: Measure, c1: float, c2: float, c3: float) -> float:
+    return c1 * u.prev + c2 * err.curr + c3 * err.prev
 
 
 def listen() -> None:
@@ -72,7 +81,7 @@ def listen() -> None:
 
 
 def main():
-    global C1, C2, C3, err, u, pan, tilt, curr, prev, adc
+    global C1, C2, C3, err_pan, u_pan, err_tilt, u_tilt, pan, tilt, curr, prev, adc
     while True:
         try:
             with connect(f"ws://{SERVER_IP}:3000") as websocket:
@@ -80,17 +89,33 @@ def main():
                 while True:
                     curr = time_ns()
                     if curr - prev >= SAMPLING_INTERVAL:
-                        output = analog_read(VOLTAGE_READ_PIN) * VOLTAGE_CONSTANT
                         time = (curr - START) / 1e9
 
+                        # Panoramic motor
+                        output_pan = analog_read(PAN_READ_PIN) * VOLTAGE_CONSTANT
+
                         # Update previous and current values
-                        err.prev = err.curr
-                        err.curr = pan - output
+                        err_pan.prev = err_pan.curr
+                        err_pan.curr = pan - output_pan
 
-                        u.prev = u.curr
-                        u.curr = control(err, u)
+                        u_pan.prev = u_pan.curr
+                        u_pan.curr = control(err_pan, u_pan, C1_PAN, C2_PAN, C3_PAN)
 
-                        h_bridge_write(rpi, PIN_ONE, PIN_TWO, u.curr)
+                        h_bridge_write(rpi, PIN_ONE, PIN_TWO, u_pan.curr)
+
+
+                        # Tilt motor
+                        output_tilt = analog_read(TILT_READ_PIN) * VOLTAGE_CONSTANT
+
+                        # Update previous and current values
+                        err_tilt.prev = err_tilt.curr
+                        err_tilt.curr = tilt - output_tilt
+
+                        u_tilt.prev = u_tilt.curr
+                        u_tilt.curr = control(err_tilt, u_tilt, C1_TILT, C2_TILT, C3_TILT)
+
+                        h_bridge_write(rpi, PIN_THREE, PIN_FOUR, u_tilt.curr)
+
 
                         websocket.send(
                             dumps(
@@ -99,9 +124,12 @@ def main():
                                     "data": {
                                         "id": id,
                                         "Tempo": time,
-                                        "Saída": output,
-                                        "Erro": err.curr,
-                                        "Esforço": u.curr,
+                                        "Saída Pan": output_pan,
+                                        "Erro Pan": err_pan.curr,
+                                        "Esforço Pan": u_pan.curr,
+                                        "Saída Tilt": output_tilt,
+                                        "Erro Tilt": err_tilt.curr,
+                                        "Esforço Tilt": u_tilt.curr,
                                     },
                                 }
                             )
