@@ -68,7 +68,7 @@ wsServer.on("connection", function (connection) {
         message = JSON.parse(message.toString());
         switch (message.type) {
             case "messages":
-                clients[userId].messages = message.messages
+                clients[userId].messages = message.messages;
                 break;
             case "auto_pose":
                 if (state.auto) {
@@ -78,7 +78,7 @@ wsServer.on("connection", function (connection) {
                     distributeData({
                         type: "pose",
                         pan: state.pan,
-                        tilt: state.tilt
+                        tilt: state.tilt,
                     });
                 }
                 break;
@@ -90,7 +90,7 @@ wsServer.on("connection", function (connection) {
                     distributeData({
                         type: "pose",
                         pan: state.pan,
-                        tilt: state.tilt
+                        tilt: state.tilt,
                     });
                 }
                 break;
@@ -203,7 +203,7 @@ process.on("SIGINT", () => {
 });
 
 // Send current state to subscribers every few seconds
-setTimeout(()=>{
+setTimeout(() => {
     distributeData({ type: "pose", pan: state.pan, tilt: state.tilt });
     distributeData({ type: "auto_state", auto: state.auto });
-}, 5000)
+}, 5000);

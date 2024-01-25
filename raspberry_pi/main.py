@@ -61,14 +61,7 @@ def listen() -> None:
     while True:
         try:
             with connect(f"ws://{SERVER_IP}:3000") as websocket:
-                websocket.send(
-                    dumps(
-                        {
-                            "type": "messages",
-                            "messages": ["pose"]
-                        }
-                    )
-                )
+                websocket.send(dumps({"type": "messages", "messages": ["pose"]}))
                 while True:
                     message = loads(websocket.recv())
                     pan = max(0, min(5, message["pan"] * ANGLE_CONSTANT))
