@@ -203,7 +203,7 @@ process.on("SIGINT", () => {
 });
 
 // Send current state to subscribers every few seconds
-setTimeout(() => {
+setInterval(() => {
     distributeData({ type: "pose", pan: state.pan, tilt: state.tilt });
     distributeData({ type: "auto_state", auto: state.auto });
 }, 5000);
