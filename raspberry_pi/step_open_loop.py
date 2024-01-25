@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime as dt
 from time import time_ns, sleep
 from json import load, dumps
 from Adafruit_ADS1x15 import ADS1115
@@ -8,7 +8,7 @@ from controller import *
 
 VOLTAGE_READ_PIN = 0
 START = time_ns()
-id = f"step_open_loop_{str(datetime.now())}"
+id = f"step_open_loop {dt.now().strftime('%Y-%m-%d %H_%M_%S')}"
 # Run new iteration every SAMPLING_INTERVAL nanoseconds
 SAMPLING_INTERVAL = 30_000_000
 # Run new test every RESET_INTERVAL nanoseconds

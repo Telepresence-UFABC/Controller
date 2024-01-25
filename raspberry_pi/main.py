@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime as dt
 from time import time_ns, sleep
 from json import load, loads, dumps
 from Adafruit_ADS1x15 import ADS1115
@@ -11,7 +11,7 @@ PAN_READ_PIN = 0
 TILT_READ_PIN = 1
 
 START = time_ns()
-id = f"main_{str(datetime.now())}"
+id = f"main {dt.now().strftime('%Y-%m-%d %H_%M_%S')}"
 # Run new iteration every SAMPLING_INTERVAL nanoseconds
 SAMPLING_INTERVAL = 5_000_000
 # Receive new reference every RECEIVE_INTERVAL nanoseconds
