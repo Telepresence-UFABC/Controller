@@ -69,6 +69,9 @@ wsServer.on("connection", function (connection) {
         switch (message.type) {
             case "messages":
                 clients[userId].messages = message.messages;
+
+                distributeData({ type: "pose", pan: state.pan, tilt: state.tilt });
+                distributeData({ type: "auto_state", auto: state.auto });
                 break;
             case "auto_pose":
                 if (state.auto) {
@@ -201,9 +204,3 @@ process.on("SIGINT", () => {
     poseEstimation.kill();
     process.exit();
 });
-
-// Send current state to subscribers every few seconds
-setInterval(() => {
-    distributeData({ type: "pose", pan: state.pan, tilt: state.tilt });
-    distributeData({ type: "auto_state", auto: state.auto });
-}, 5000);
