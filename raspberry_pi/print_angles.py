@@ -1,7 +1,8 @@
 from Adafruit_ADS1x15 import ADS1115
 from controller import *
 
-VOLTAGE_READ_PIN = 0
+PAN_READ_PIN = 0
+TILT_READ_PIN = 1
 # ADC gain set to GAIN
 GAIN = 1
 # 3.3 V to 5 V
@@ -19,4 +20,6 @@ def analog_read(pin: int = 0) -> float:
     return adc2voltage(adc.read_adc(pin, gain=GAIN))
 
 while True:
-    print(analog_read(VOLTAGE_READ_PIN) * VOLTAGE_CONSTANT * ANGLE_CONSTANT)
+    pan = analog_read(PAN_READ_PIN) * VOLTAGE_CONSTANT * ANGLE_CONSTANT
+    tilt = analog_read(TILT_READ_PIN) * VOLTAGE_CONSTANT * ANGLE_CONSTANT
+    print(f"Pan: {pan}, Tilt: {tilt}")
