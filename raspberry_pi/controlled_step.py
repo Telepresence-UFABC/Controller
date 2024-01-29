@@ -25,7 +25,7 @@ VOLTAGE_CONSTANT = 5 / 3.3
 ANGLE_CONSTANT = 300 / 5
 
 # Load controller constants
-with open("../system_parameters/controller_1.info", "r") as file:
+with open("../system_parameters/controller_pan.info", "r") as file:
     consts: dict = load(file)
     C1, C2, C3 = consts["c1"], consts["c2"], consts["c3"]
 

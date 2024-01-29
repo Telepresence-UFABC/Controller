@@ -24,11 +24,11 @@ VOLTAGE_CONSTANT = 5 / 3.3
 ANGLE_CONSTANT = 5 / 300
 
 # Load controller constants
-with open("../system_parameters/controller_1.info", "r") as file:
+with open("../system_parameters/controller_pan.info", "r") as file:
     consts: dict = load(file)
     C1_PAN, C2_PAN, C3_PAN = consts["c1"], consts["c2"], consts["c3"]
 
-with open("../system_parameters/controller_1.info", "r") as file:
+with open("../system_parameters/controller_pan.info", "r") as file:
     consts: dict = load(file)
     C1_TILT, C2_TILT, C3_TILT = consts["c1"], consts["c2"], consts["c3"]
 
