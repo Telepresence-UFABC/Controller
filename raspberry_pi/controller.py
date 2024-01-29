@@ -22,10 +22,14 @@ def setup() -> pi:
     # Set PWM range
     rpi.set_PWM_range(PIN_ONE, PWM_MAX_RANGE)
     rpi.set_PWM_range(PIN_TWO, PWM_MAX_RANGE)
+    rpi.set_PWM_range(PIN_THREE, PWM_MAX_RANGE)
+    rpi.set_PWM_range(PIN_FOUR, PWM_MAX_RANGE)
 
     # Set PWM frequency
     rpi.set_PWM_frequency(PIN_ONE, PWM_FREQUENCY)
     rpi.set_PWM_frequency(PIN_TWO, PWM_FREQUENCY)
+    rpi.set_PWM_frequency(PIN_THREE, PWM_FREQUENCY)
+    rpi.set_PWM_frequency(PIN_FOUR, PWM_FREQUENCY)
 
     return rpi
 
