@@ -1,7 +1,8 @@
+import board, busio, adafruit_ads1x15.ads1115 as ADS
+from adafruit_ads1x15.analog_in import AnalogIn
 from datetime import datetime as dt
 from time import time_ns, sleep
 from json import load, loads, dumps
-from Adafruit_ADS1x15 import ADS1115
 from threading import Thread
 from websockets.sync.client import connect
 from websockets.exceptions import InvalidURI, InvalidHandshake, ConnectionClosedError
@@ -50,15 +51,13 @@ tilt = 1.5
 curr = time_ns()
 prev = 0
 
-adc = ADS1115()
+i2c = busio.I2C(board.SCL, board.SDA)
 
-
-def adc2voltage(val: int) -> float:
-    return max(0, val / 32767 * 4.096)
+adc = ADS.ADS1115(i2c)
 
 
 def analog_read(pin: int = 0) -> float:
-    return adc2voltage(adc.read_adc(pin, gain=GAIN))
+    return AnalogIn(adc, pin).voltage
 
 
 def control(err: Measure, u: Measure, c1: float, c2: float, c3: float) -> float:
