@@ -1,16 +1,18 @@
 const state = {
-        pan: 0,
-        tilt: 0,
-        auto: false,
-    },
+    pan: 0,
+    tilt: 0,
+    auto: false,
+},
+    remoteVideoPlayer = document.querySelector("#remote-video-player"),
     videoPlayer = document.querySelector("#video-player"),
     websocket = new WebSocket(`ws://${SERVER_IP}:3000`);
 
-websocket.addEventListener("open", (event)=>{
+websocket.addEventListener("open", (event) => {
     websocket.send(JSON.stringify(
         {
             type: "messages",
-            messages: ["pose", "video", "auto_state"]}))
+            messages: ["pose", "video", "remote_video", "auto_state"]
+        }))
 })
 
 websocket.addEventListener("message", (event) => {
@@ -24,6 +26,11 @@ websocket.addEventListener("message", (event) => {
         case "auto_state":
             state.auto = message.auto;
             updateAutoButton(message);
+            break;
+        case "remote_video":
+            const remoteVideoBlob = base64ToBlob(message.media);
+            const remoteFrameURL = URL.createObjectURL(remoteVideoBlob);
+            remoteVideoPlayer.src = remoteFrameURL;
             break;
         case "video":
             const videoBlob = base64ToBlob(message.media);
