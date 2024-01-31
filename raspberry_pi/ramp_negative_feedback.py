@@ -100,6 +100,7 @@ while True:
                                 "data": {
                                     "id": id,
                                     "Tempo": time,
+                                    "Referencia": ref,
                                     "Saída": output * ANGLE_CONSTANT,
                                     "Erro": (ref - output) * ANGLE_CONSTANT,
                                 },
