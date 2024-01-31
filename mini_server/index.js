@@ -105,6 +105,7 @@ wsServer.on("connection", function (connection) {
             case "log":
                 logToFile(message);
             case "video":
+            case "remote_video":
                 distributeData(message);
                 break;
             default:
