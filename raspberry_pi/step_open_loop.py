@@ -6,13 +6,13 @@ from websockets.sync.client import connect
 from websockets.exceptions import InvalidURI, InvalidHandshake, ConnectionClosedError
 from controller import *
 
-VOLTAGE_READ_PIN = 0
+VOLTAGE_READ_PIN = 1
 START = time_ns()
 id = f"step_open_loop {dt.now().strftime('%Y-%m-%d %H_%M_%S')}"
 # Run new iteration every SAMPLING_INTERVAL nanoseconds
 SAMPLING_INTERVAL = 30_000_000
 # Run new test every RESET_INTERVAL nanoseconds
-RESET_INTERVAL = 2_000_000_000
+RESET_INTERVAL = 500_000_000
 # Stop for STOP_INTERVAL nanoseconds after reset
 STOP_INTERVAL = 2_000_000_000
 # ADC gain set to GAIN
@@ -78,14 +78,14 @@ while True:
 
                     # Update previous and current values, reference is always set to 0
                     err.prev = err.curr
-                    err.curr = -output.curr
+                    err.curr = 1 - output.curr
 
                     u.prev = u.curr
                     u.curr = control(err, u)
 
                     # reference if normal operation, else move system to 0 position
                     h_bridge_write(
-                        rpi, PIN_ONE, PIN_TWO, ref if normal_operation else u.curr
+                        rpi, PIN_THREE, PIN_FOUR, ref if normal_operation else u.curr
                     )
 
                     websocket.send(
@@ -108,7 +108,7 @@ while True:
                     # send logs to server
                     # return to normal operation
                     if (
-                        abs(output.curr) <= TOLERANCE
+                        abs(1 - output.curr) <= TOLERANCE
                         and curr - prev_reset >= RESET_INTERVAL + STOP_INTERVAL
                     ):
                         normal_operation = 1
