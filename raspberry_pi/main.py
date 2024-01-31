@@ -1,4 +1,4 @@
-import cv2, time, base64
+import cv2, base64
 import board, busio, adafruit_ads1x15.ads1115 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
 from datetime import datetime as dt
@@ -82,31 +82,14 @@ def listen() -> None:
             sleep(2)
 
 
-def send_video() -> None:
+def main() -> None:
+    global C1, C2, C3, err_pan, u_pan, err_tilt, u_tilt, pan, tilt, curr, prev, adc
     while True:
         try:
             with connect(f"ws://{SERVER_IP}:3000") as websocket:
                 cap = cv2.VideoCapture(0)
                 cap.set(cv2.CAP_PROP_FRAME_WIDTH, RPI_WIDTH)
                 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, RPI_HEIGHT)
-                while True:
-                    ok, frame = cap.read()
-                    if not ok:
-                        continue
-                    ok, video_buffer = cv2.imencode(".jpg", frame)
-                    frame = base64.b64encode(video_buffer).decode("utf-8")
-                    websocket.send(dumps({"type": "remote_video", "media": frame}))
-
-        except (InvalidURI, OSError, InvalidHandshake, ConnectionClosedError) as e:
-            print(f"Could not connect to server, error: {e}")
-            time.sleep(2)
-
-
-def main() -> None:
-    global C1, C2, C3, err_pan, u_pan, err_tilt, u_tilt, pan, tilt, curr, prev, adc
-    while True:
-        try:
-            with connect(f"ws://{SERVER_IP}:3000") as websocket:
                 rpi = setup()
                 while True:
                     curr = time_ns()
@@ -157,6 +140,13 @@ def main() -> None:
                             )
                         )
 
+                        ok, frame = cap.read()
+                        if not ok:
+                            continue
+                        ok, video_buffer = cv2.imencode(".jpg", frame)
+                        frame = base64.b64encode(video_buffer).decode("utf-8")
+                        websocket.send(dumps({"type": "remote_video", "media": frame}))
+                        
                         prev = time_ns()
         except (InvalidURI, OSError, InvalidHandshake, ConnectionClosedError) as e:
             print(f"Could not connect to server, error: {e}")
@@ -168,6 +158,3 @@ listen_thread.start()
 
 main_thread = Thread(target=main)
 main_thread.start()
-
-send_video_thread = Thread(target=send_video)
-send_video_thread.start()
