@@ -40,6 +40,8 @@ with open(
 ) as file:
     SETUP: dict = load(file)
     SERVER_IP: str = SETUP["SERVER_IP"]
+    RPI_WIDTH: int = SETUP["RPI_WIDTH"]
+    RPI_HEIGHT: int = SETUP["RPI_HEIGHT"]
 
 err_pan = Measure()
 u_pan = Measure()
@@ -85,6 +87,8 @@ def send_video() -> None:
         try:
             with connect(f"ws://{SERVER_IP}:3000") as websocket:
                 cap = cv2.VideoCapture(0)
+                cap.set(cv2.CAP_PROP_FRAME_WIDTH, RPI_WIDTH)
+                cap.set(cv2.CAP_PROP_FRAME_HEIGHT, RPI_HEIGHT)
                 while True:
                     ok, frame = cap.read()
                     if not ok:

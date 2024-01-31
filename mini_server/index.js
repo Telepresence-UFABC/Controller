@@ -27,6 +27,8 @@ const SETUP = {
     LOG_PATH: join(__dirname, "../logs"),
     WIDTH: 640,
     HEIGHT: 480,
+    RPI_WIDTH: 320,
+    RPI_HEIGHT: 240
 };
 
 const state = {
