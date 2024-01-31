@@ -6,15 +6,15 @@ from websockets.sync.client import connect
 from websockets.exceptions import InvalidURI, InvalidHandshake, ConnectionClosedError
 from controller import *
 
-VOLTAGE_READ_PIN = 0
+VOLTAGE_READ_PIN = 1
 START = time_ns()
 id = f"ramp {dt.now().strftime('%Y-%m-%d %H_%M_%S')}"
 # Run new iteration every SAMPLING_INTERVAL nanoseconds
 SAMPLING_INTERVAL = 5_000_000
 # Stop for STOP_INTERVAL nanoseconds after reset
-STOP_INTERVAL = 2_000_000_000
+STOP_INTERVAL = 1_000_000_000
 # Max value of ramp in nanovolts is set to MAX_RAMP
-MAX_RAMP = 5_000_000_000
+MAX_RAMP = 2_500_000_000
 # ADC gain set to GAIN
 GAIN = 1
 # Tolerance set to TOLERANCE
@@ -77,7 +77,7 @@ while True:
                         normal_operation = 0
 
                     # Ramp goes from 0 to MAX_RAMP nanovolts
-                    ref = (curr - prev_ramp) / 1e9
+                    ref = 1 + (curr - prev_ramp) / 1e9
 
                     # Update previous and current values, reference is always set to 0
                     err.prev = err.curr
@@ -89,8 +89,8 @@ while True:
                     # negative feedback if normal operation, else move system to 0 position
                     h_bridge_write(
                         rpi,
-                        PIN_ONE,
-                        PIN_TWO,
+                        PIN_THREE,
+                        PIN_FOUR,
                         ref - output if normal_operation else u.curr,
                     )
                     websocket.send(
@@ -114,7 +114,7 @@ while True:
                 # send logs and restart normal operation
                 if (
                     normal_operation == 0
-                    and abs(output) <= TOLERANCE
+                    and abs(1 - output) <= TOLERANCE
                     and curr - prev_ramp >= MAX_RAMP + STOP_INTERVAL
                 ):
                     normal_operation = 1
