@@ -146,11 +146,11 @@ def main() -> None:
                                     "data": {
                                         "id": id,
                                         "Tempo": time,
-                                        "Saída Pan": output_pan * ANGLE_CONSTANT,
-                                        "Erro Pan": err_pan.curr * ANGLE_CONSTANT,
+                                        "Saída Pan": output_pan/ANGLE_CONSTANT,
+                                        "Erro Pan": err_pan.curr/ANGLE_CONSTANT,
                                         "Esforço Pan": u_pan.curr,
-                                        "Saída Tilt": output_tilt * ANGLE_CONSTANT,
-                                        "Erro Tilt": err_tilt.curr * ANGLE_CONSTANT,
+                                        "Saída Tilt": output_tilt/ANGLE_CONSTANT,
+                                        "Erro Tilt": err_tilt.curr/ANGLE_CONSTANT,
                                         "Esforço Tilt": u_tilt.curr,
                                     },
                                 }
