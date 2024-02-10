@@ -25,9 +25,10 @@ VOLTAGE_CONSTANT = 5 / 3.3
 ANGLE_CONSTANT = 300 / 5
 
 # Load controller constants
-with open("../system_parameters/controller_pan.info", "r") as file:
+with open("../system_parameters/controller_tilt.info", "r") as file:
     consts: dict = load(file)
-    C1, C2, C3 = consts["c1"], consts["c2"], consts["c3"]
+    TILT_OUTPUT_COEFS = consts["output"]
+    TILT_INPUT_COEFS = consts["input"]
 
 with open(
     "../mini_server/public/server_setup/setup.json",
@@ -36,8 +37,8 @@ with open(
     SETUP: dict = load(file)
     SERVER_IP: str = SETUP["SERVER_IP"]
 
-err = Measure()
-u = Measure()
+err = len(TILT_INPUT_COEFS) * [0]
+u = (len(TILT_OUTPUT_COEFS) + 1) * [0]
 
 ref = 0
 output = 0
@@ -57,10 +58,6 @@ def analog_read(pin: int = 0) -> float:
     return adc2voltage(adc.read_adc(pin, gain=GAIN))
 
 
-def control(err: Measure, u: Measure) -> float:
-    return C1 * u.prev + C2 * err.curr + C3 * err.prev
-
-
 while True:
     try:
         with connect(f"ws://{SERVER_IP}:3000") as websocket:
@@ -77,21 +74,24 @@ while True:
                         normal_operation = 0
 
                     # Ramp goes from 0 to MAX_RAMP nanovolts
-                    ref = 1 + (curr - prev_ramp) / 1e9
+                    ref = (curr - prev_ramp) / 1e9
 
                     # Update previous and current values, reference is always set to 0
-                    err.prev = err.curr
-                    err.curr = -output
+                    err.pop()
+                    err.insert(0, -output)
 
-                    u.prev = u.curr
-                    u.curr = control(err, u)
+                    u.pop()
+                    u.insert(
+                        0,
+                        control(TILT_INPUT_COEFS, TILT_OUTPUT_COEFS, err, u),
+                    )
 
                     # negative feedback if normal operation, else move system to 0 position
                     h_bridge_write(
                         rpi,
                         PIN_THREE,
                         PIN_FOUR,
-                        ref - output if normal_operation else u.curr,
+                        ref - output if normal_operation else u[0],
                     )
                     websocket.send(
                         dumps(

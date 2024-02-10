@@ -28,11 +28,13 @@ ANGLE_CONSTANT = 5 / 300
 # Load controller constants
 with open("../system_parameters/controller_pan.info", "r") as file:
     consts: dict = load(file)
-    C1_PAN, C2_PAN, C3_PAN = consts["c1"], consts["c2"], consts["c3"]
+    PAN_OUTPUT_COEFS = consts["output"]
+    PAN_INPUT_COEFS = consts["input"]
 
 with open("../system_parameters/controller_tilt.info", "r") as file:
     consts: dict = load(file)
-    C1_TILT, C2_TILT, C3_TILT = consts["c1"], consts["c2"], consts["c3"]
+    TILT_OUTPUT_COEFS = consts["output"]
+    TILT_INPUT_COEFS = consts["input"]
 
 with open(
     "../mini_server/public/server_setup/setup.json",
@@ -43,11 +45,11 @@ with open(
     RPI_WIDTH: int = SETUP["RPI_WIDTH"]
     RPI_HEIGHT: int = SETUP["RPI_HEIGHT"]
 
-err_pan = Measure()
-u_pan = Measure()
+err_pan = len(PAN_INPUT_COEFS) * [0]
+u_pan = (len(PAN_OUTPUT_COEFS) + 1) * [0]
 
-err_tilt = Measure()
-u_tilt = Measure()
+err_tilt = len(TILT_INPUT_COEFS) * [0]
+u_tilt = (len(TILT_OUTPUT_COEFS) + 1) * [0]
 
 pan = 1.5
 tilt = 1.5
@@ -61,10 +63,6 @@ adc = ADS.ADS1115(i2c)
 
 def analog_read(pin: int = 0) -> float:
     return AnalogIn(adc, pin).voltage
-
-
-def control(err: Measure, u: Measure, c1: float, c2: float, c3: float) -> float:
-    return c1 * u.prev + c2 * err.curr + c3 * err.prev
 
 
 def listen() -> None:
@@ -103,7 +101,7 @@ def send_video() -> None:
 
 
 def main() -> None:
-    global C1, C2, C3, err_pan, u_pan, err_tilt, u_tilt, pan, tilt, curr, prev, adc
+    global err_pan, u_pan, err_tilt, u_tilt, pan, tilt, curr, prev
     while True:
         try:
             with connect(f"ws://{SERVER_IP}:3000") as websocket:
@@ -117,24 +115,30 @@ def main() -> None:
                         output_pan = analog_read(PAN_READ_PIN) * VOLTAGE_CONSTANT
 
                         # Update previous and current values
-                        err_pan.prev = err_pan.curr
-                        err_pan.curr = pan - output_pan
+                        err_pan.pop()
+                        err_pan.insert(0, pan - output_pan)
 
-                        u_pan.prev = u_pan.curr
-                        u_pan.curr = control(err_pan, u_pan, C1_PAN, C2_PAN, C3_PAN)
+                        u_pan.pop()
+                        u_pan.insert(
+                            0,
+                            control(PAN_INPUT_COEFS, PAN_OUTPUT_COEFS, err_pan, u_pan),
+                        )
 
-                        h_bridge_write(rpi, PIN_ONE, PIN_TWO, u_pan.curr)
+                        h_bridge_write(rpi, PIN_ONE, PIN_TWO, u_pan[0])
 
                         # Tilt motor
                         output_tilt = analog_read(TILT_READ_PIN) * VOLTAGE_CONSTANT
 
                         # Update previous and current values
-                        err_tilt.prev = err_tilt.curr
-                        err_tilt.curr = tilt - output_tilt
+                        err_pan.pop()
+                        err_pan.insert(0, tilt - output_tilt)
 
-                        u_tilt.prev = u_tilt.curr
-                        u_tilt.curr = control(
-                            err_tilt, u_tilt, C1_TILT, C2_TILT, C3_TILT
+                        u_tilt.pop()
+                        u_tilt.insert(
+                            0,
+                            control(
+                                TILT_INPUT_COEFS, TILT_OUTPUT_COEFS, err_tilt, u_tilt
+                            ),
                         )
 
                         h_bridge_write(rpi, PIN_THREE, PIN_FOUR, u_tilt.curr)
@@ -146,12 +150,12 @@ def main() -> None:
                                     "data": {
                                         "id": id,
                                         "Tempo": time,
-                                        "Saída Pan": output_pan/ANGLE_CONSTANT,
-                                        "Erro Pan": err_pan.curr/ANGLE_CONSTANT,
-                                        "Esforço Pan": u_pan.curr,
-                                        "Saída Tilt": output_tilt/ANGLE_CONSTANT,
-                                        "Erro Tilt": err_tilt.curr/ANGLE_CONSTANT,
-                                        "Esforço Tilt": u_tilt.curr,
+                                        "Saída Pan": output_pan / ANGLE_CONSTANT,
+                                        "Erro Pan": err_pan[0] / ANGLE_CONSTANT,
+                                        "Esforço Pan": u_pan[0],
+                                        "Saída Tilt": output_tilt / ANGLE_CONSTANT,
+                                        "Erro Tilt": err_tilt[0] / ANGLE_CONSTANT,
+                                        "Esforço Tilt": u_tilt[0],
                                     },
                                 }
                             )

@@ -25,9 +25,10 @@ VOLTAGE_CONSTANT = 5 / 3.3
 ANGLE_CONSTANT = 300 / 5
 
 # Load controller constants
-with open("../system_parameters/controller_pan.info", "r") as file:
+with open("../system_parameters/controller_tilt.info", "r") as file:
     consts: dict = load(file)
-    C1, C2, C3 = consts["c1"], consts["c2"], consts["c3"]
+    TILT_OUTPUT_COEFS = consts["output"]
+    TILT_INPUT_COEFS = consts["input"]
 
 with open(
     "../mini_server/public/server_setup/setup.json",
@@ -36,9 +37,9 @@ with open(
     SETUP: dict = load(file)
     SERVER_IP: str = SETUP["SERVER_IP"]
 
-err = Measure()
-u = Measure()
-output = Measure()
+err = len(TILT_INPUT_COEFS) * [0]
+u = (len(TILT_OUTPUT_COEFS) + 1) * [0]
+output = [0, 0]
 
 ref = 5
 curr = time_ns()
@@ -57,10 +58,6 @@ def analog_read(pin: int = 0) -> float:
     return adc2voltage(adc.read_adc(pin, gain=GAIN))
 
 
-def control(err: Measure, u: Measure) -> float:
-    return C1 * u.prev + C2 * err.curr + C3 * err.prev
-
-
 while True:
     try:
         with connect(f"ws://{SERVER_IP}:3000") as websocket:
@@ -68,24 +65,27 @@ while True:
             while True:
                 curr = time_ns()
                 if curr - prev >= SAMPLING_INTERVAL:
-                    output.prev = output.curr
-                    output.curr = analog_read(VOLTAGE_READ_PIN) * VOLTAGE_CONSTANT
+                    output[1] = output[0]
+                    output[0] = analog_read(VOLTAGE_READ_PIN) * VOLTAGE_CONSTANT
 
                     delta_t = (curr - prev) / 1e9
-                    speed = (output.curr - output.prev) * ANGLE_CONSTANT / delta_t
+                    speed = (output[0] - output[1]) * ANGLE_CONSTANT / delta_t
 
                     time = (curr - prev_reset) / 1e9
 
                     # Update previous and current values, reference is always set to 0
-                    err.prev = err.curr
-                    err.curr = 1 - output.curr
+                    err.pop()
+                    err.insert(0, 1 - output)
 
-                    u.prev = u.curr
-                    u.curr = control(err, u)
+                    u.pop()
+                    u.insert(
+                        0,
+                        control(TILT_INPUT_COEFS, TILT_OUTPUT_COEFS, err, u),
+                    )
 
                     # reference if normal operation, else move system to 0 position
                     h_bridge_write(
-                        rpi, PIN_THREE, PIN_FOUR, ref if normal_operation else u.curr
+                        rpi, PIN_THREE, PIN_FOUR, ref if normal_operation else u[0]
                     )
 
                     websocket.send(
@@ -108,7 +108,7 @@ while True:
                     # send logs to server
                     # return to normal operation
                     if (
-                        abs(1 - output.curr) <= TOLERANCE
+                        abs(1 - output[0]) <= TOLERANCE
                         and curr - prev_reset >= RESET_INTERVAL + STOP_INTERVAL
                     ):
                         normal_operation = 1
