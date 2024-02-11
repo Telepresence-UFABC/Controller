@@ -94,7 +94,7 @@ while True:
 
                 # Update previous and current values
                 err.pop()
-                err.insert(0, ref * current_operation - output)
+                err.insert(0, ref * (current_operation == Operation.NORMAL) - output)
 
                 u.pop()
                 u.insert(
