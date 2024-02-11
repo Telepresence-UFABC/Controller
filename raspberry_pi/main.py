@@ -141,7 +141,7 @@ def main() -> None:
                             ),
                         )
 
-                        h_bridge_write(rpi, PIN_THREE, PIN_FOUR, u_tilt.curr)
+                        h_bridge_write(rpi, PIN_THREE, PIN_FOUR, u_tilt[0])
 
                         websocket.send(
                             dumps(
