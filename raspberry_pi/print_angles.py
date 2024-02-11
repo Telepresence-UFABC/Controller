@@ -1,4 +1,5 @@
-from Adafruit_ADS1x15 import ADS1115
+import board, busio, adafruit_ads1x15.ads1115 as ADS
+from adafruit_ads1x15.analog_in import AnalogIn
 from controller import *
 
 PAN_READ_PIN = 0
@@ -10,14 +11,14 @@ VOLTAGE_CONSTANT = 5 / 3.3
 # 1V every 60 deg
 ANGLE_CONSTANT = 300 / 5
 
-adc = ADS1115()
+i2c = busio.I2C(board.SCL, board.SDA)
 
-def adc2voltage(val: int) -> float:
-    return max(0, val / 32767 * 4.096)
+adc = ADS.ADS1115(i2c)
 
 
 def analog_read(pin: int = 0) -> float:
-    return adc2voltage(adc.read_adc(pin, gain=GAIN))
+    return AnalogIn(adc, pin).voltage
+
 
 while True:
     pan = analog_read(PAN_READ_PIN) * VOLTAGE_CONSTANT * ANGLE_CONSTANT
