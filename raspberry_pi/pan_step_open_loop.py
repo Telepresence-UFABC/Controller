@@ -8,22 +8,23 @@ from websockets.exceptions import InvalidURI, InvalidHandshake, ConnectionClosed
 from controller import *
 
 VOLTAGE_READ_PIN = 0
-START = time_ns()
+N_ITER = 10
+iter_count = 1
 id = f"step_open_loop {dt.now().strftime('%Y-%m-%d %H_%M_%S')}"
 # Run new iteration every SAMPLING_INTERVAL nanoseconds
-SAMPLING_INTERVAL = 30_000_000
-# Run new test every RESET_INTERVAL nanoseconds
-RESET_INTERVAL = 1_000_000_000
+SAMPLING_INTERVAL = 30 * 1e6
+# Run new test after potentiometer measures END_POSITION V
+END_POSITION = 4.5
 # Stop for STOP_INTERVAL nanoseconds after reset
-STOP_INTERVAL = 2_000_000_000
+STOP_INTERVAL = 1 * 1e9
 # ADC gain set to GAIN
 GAIN = 1
 # Tolerance set to TOLERANCE
-TOLERANCE = 0.5
+TOLERANCE = 0.1
 # 3.3 V to 5 V
 VOLTAGE_CONSTANT = 5 / 3.3
 # 1V every 60 deg
-ANGLE_CONSTANT = 300 / 5
+VOLT2ANGLE = 300 / 5
 
 # Load controller constants
 with open("../system_parameters/controller_pan.info", "r") as file:
@@ -40,78 +41,114 @@ with open(
 
 err = len(PAN_INPUT_COEFS) * [0]
 u = (len(PAN_OUTPUT_COEFS) + 1) * [0]
-output = [0, 0]
+output = [5, 0]
 
 ref = 5
-curr = time_ns()
 prev = 0
 prev_reset = time_ns()
-normal_operation = 1
+current_operation = Operation.NORMAL
 
 i2c = busio.I2C(board.SCL, board.SDA)
 
 adc = ADS.ADS1115(i2c)
+
+rpi = setup()
 
 
 def analog_read(pin: int = 0) -> float:
     return AnalogIn(adc, pin).voltage
 
 
+# Move to zero position to start testing
+while abs(output[0]) > TOLERANCE:
+    curr = time_ns()
+    if curr - prev < SAMPLING_INTERVAL:
+        continue
+
+    output[0] = analog_read(VOLTAGE_READ_PIN) * VOLTAGE_CONSTANT
+
+    # Update previous and current values
+    err.pop()
+    err.insert(0, -output[0])
+
+    u.pop()
+    u.insert(
+        0,
+        control(PAN_INPUT_COEFS, PAN_OUTPUT_COEFS, err, u),
+    )
+
+    h_bridge_write(rpi, PIN_ONE, PIN_TWO, u[0])
+    prev = time_ns()
+
+sleep(1)
+
 while True:
     try:
         with connect(f"ws://{SERVER_IP}:3000") as websocket:
-            rpi = setup()
             while True:
                 curr = time_ns()
-                if curr - prev >= SAMPLING_INTERVAL:
-                    output[1] = output[0]
-                    output[0] = analog_read(VOLTAGE_READ_PIN) * VOLTAGE_CONSTANT
+                if curr - prev < SAMPLING_INTERVAL:
+                    continue
 
-                    delta_t = (curr - prev) / 1e9
-                    speed = (output[0] - output[1]) * ANGLE_CONSTANT / delta_t
+                output[1] = output[0]
+                output[0] = analog_read(VOLTAGE_READ_PIN) * VOLTAGE_CONSTANT
 
-                    time = (curr - prev_reset) / 1e9
+                delta_t = (curr - prev) / 1e9
+                speed = (output[0] - output[1]) * VOLT2ANGLE / delta_t
 
-                    # Update previous and current values, reference is always set to 0
-                    err.pop()
-                    err.insert(0, -output)
+                # Update previous and current values, reference is always set to 0
+                err.pop()
+                err.insert(0, -output[0])
 
-                    u.pop()
-                    u.insert(
-                        0,
-                        control(PAN_INPUT_COEFS, PAN_OUTPUT_COEFS, err, u),
-                    )
+                u.pop()
+                u.insert(
+                    0,
+                    control(PAN_INPUT_COEFS, PAN_OUTPUT_COEFS, err, u),
+                )
 
-                    # reference if normal operation, else move system to 0 position
-                    h_bridge_write(
-                        rpi, PIN_ONE, PIN_TWO, ref if normal_operation else u[0]
-                    )
+                # reference if normal operation, else move system to 0 position
+                h_bridge_write(
+                    rpi,
+                    PIN_ONE,
+                    PIN_TWO,
+                    ref if current_operation == Operation.NORMAL else u[0],
+                )
 
+                if current_operation == Operation.NORMAL:
+                    time = (curr - prev_reset - STOP_INTERVAL * (iter_count > 1)) / 1e9
                     websocket.send(
                         dumps(
                             {
                                 "type": "log",
-                                "data": {"id": id, "Tempo": time, "Saída": speed},
+                                "data": {
+                                    "id": f"{iter_count}_{id}",
+                                    "Tempo": time,
+                                    "Saída": speed,
+                                },
                             }
                         )
                     )
-                    prev = time_ns()
+                prev = time_ns()
 
-                # if RESET_INTERVAL nanoseconds have passed since previous reset
-                # exit normal operation
-                if curr - prev_reset >= RESET_INTERVAL:
-                    normal_operation = 0
+                if output[0] <= END_POSITION and current_operation == Operation.NORMAL:
+                    continue
 
-                    # if motor is close to 0 position and at least STOP_INTERVAL nanoseconds
-                    # have elapsed since reset
-                    # send logs to server
-                    # return to normal operation
-                    if (
-                        abs(output[0]) <= TOLERANCE
-                        and curr - prev_reset >= RESET_INTERVAL + STOP_INTERVAL
-                    ):
-                        normal_operation = 1
-                        prev_reset = time_ns()
+                if current_operation != Operation.WAITING:
+                    current_operation = Operation.RESETTING
+
+                if (
+                    abs(output[0]) <= TOLERANCE
+                    and current_operation != Operation.WAITING
+                ):
+                    prev_reset = time_ns()
+                    current_operation = Operation.WAITING
+
+                if curr - prev_reset >= STOP_INTERVAL and Operation.WAITING:
+                    iter_count += 1
+                    current_operation = Operation.NORMAL
+
+                if iter_count > N_ITER:
+                    exit()
     except (InvalidURI, OSError, InvalidHandshake, ConnectionClosedError) as e:
         print(f"Could not connect to server, error: {e}")
         sleep(2)

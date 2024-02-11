@@ -8,22 +8,23 @@ from websockets.exceptions import InvalidURI, InvalidHandshake, ConnectionClosed
 from controller import *
 
 VOLTAGE_READ_PIN = 1
-START = time_ns()
+N_ITER = 10
+iter_count = 1
 id = f"ramp {dt.now().strftime('%Y-%m-%d %H_%M_%S')}"
 # Run new iteration every SAMPLING_INTERVAL nanoseconds
-SAMPLING_INTERVAL = 5_000_000
+SAMPLING_INTERVAL = 5 * 1e6
+# Run new test after potentiometer measures END_POSITION V
+END_POSITION = 2.75
 # Stop for STOP_INTERVAL nanoseconds after reset
-STOP_INTERVAL = 1_000_000_000
-# Max value of ramp in nanovolts is set to MAX_RAMP
-MAX_RAMP = 2_500_000_000
+STOP_INTERVAL = 1 * 1e9
 # ADC gain set to GAIN
 GAIN = 1
 # Tolerance set to TOLERANCE
-TOLERANCE = 0.5
+TOLERANCE = 0.1
 # 3.3 V to 5 V
 VOLTAGE_CONSTANT = 5 / 3.3
 # 1V every 60 deg
-ANGLE_CONSTANT = 300 / 5
+VOLT2ANGLE = 300 / 5
 
 # Load controller constants
 with open("../system_parameters/controller_tilt.info", "r") as file:
@@ -43,81 +44,108 @@ u = (len(TILT_OUTPUT_COEFS) + 1) * [0]
 
 ref = 0
 output = 0
-curr = time_ns()
 prev = 0
-prev_ramp = time_ns()
-normal_operation = 1
+prev_reset = time_ns()
+current_operation = Operation.NORMAL
 
 i2c = busio.I2C(board.SCL, board.SDA)
 
 adc = ADS.ADS1115(i2c)
+
+rpi = setup()
 
 
 def analog_read(pin: int = 0) -> float:
     return AnalogIn(adc, pin).voltage
 
 
+# Move to zero position (30 degrees) to start testing
+while abs(0.5 - output) > TOLERANCE:
+    curr = time_ns()
+    if curr - prev < SAMPLING_INTERVAL:
+        continue
+
+    output = analog_read(VOLTAGE_READ_PIN) * VOLTAGE_CONSTANT
+
+    # Update previous and current values
+    err.pop()
+    err.insert(0, 0.5 - output)
+
+    u.pop()
+    u.insert(
+        0,
+        control(TILT_INPUT_COEFS, TILT_OUTPUT_COEFS, err, u),
+    )
+
+    h_bridge_write(rpi, PIN_THREE, PIN_FOUR, u[0])
+    prev = time_ns()
+
+sleep(1)
+
 while True:
     try:
         with connect(f"ws://{SERVER_IP}:3000") as websocket:
-            rpi = setup()
             while True:
                 curr = time_ns()
-                if curr - prev >= SAMPLING_INTERVAL:
-                    output = analog_read(VOLTAGE_READ_PIN) * VOLTAGE_CONSTANT
+                if curr - prev < SAMPLING_INTERVAL:
+                    continue
 
-                    time = (curr - START) / 1e9
+                output = analog_read(VOLTAGE_READ_PIN) * VOLTAGE_CONSTANT
 
-                    # if ramp has reached max value, reset to 0 position
-                    if curr - prev_ramp >= MAX_RAMP:
-                        normal_operation = 0
+                ref = (curr - prev_reset - STOP_INTERVAL * (iter_count > 1)) / 1e9
 
-                    # Ramp goes from 0 to MAX_RAMP nanovolts
-                    ref = (curr - prev_ramp) / 1e9
+                # Update previous and current values
+                err.pop()
+                err.insert(0, 0.5 - output)
 
-                    # Update previous and current values, reference is always set to 0
-                    err.pop()
-                    err.insert(0, -output)
+                u.pop()
+                u.insert(
+                    0,
+                    control(TILT_INPUT_COEFS, TILT_OUTPUT_COEFS, err, u),
+                )
 
-                    u.pop()
-                    u.insert(
-                        0,
-                        control(TILT_INPUT_COEFS, TILT_OUTPUT_COEFS, err, u),
-                    )
-
-                    # negative feedback if normal operation, else move system to 0 position
-                    h_bridge_write(
-                        rpi,
-                        PIN_THREE,
-                        PIN_FOUR,
-                        ref - output if normal_operation else u[0],
-                    )
+                # negative feedback if normal operation, else move system to 0 position
+                h_bridge_write(
+                    rpi,
+                    PIN_THREE,
+                    PIN_FOUR,
+                    ref - output if current_operation == Operation.NORMAL else u[0],
+                )
+                if current_operation == Operation.NORMAL:
                     websocket.send(
                         dumps(
                             {
                                 "type": "log",
                                 "data": {
-                                    "id": id,
-                                    "Tempo": time,
-                                    "Referencia": ref * ANGLE_CONSTANT,
-                                    "Saída": output * ANGLE_CONSTANT,
-                                    "Erro": (ref - output) * ANGLE_CONSTANT,
+                                    "id": f"{iter_count}_{id}",
+                                    "Tempo": ref,
+                                    "Referencia": ref * VOLT2ANGLE,
+                                    "Saída": output * VOLT2ANGLE,
+                                    "Erro": err[0] * VOLT2ANGLE,
                                 },
                             }
                         )
                     )
-                    prev = time_ns()
-                # if motor is not in normal operation
-                # is close to 0 position
-                # and STOP_INTERVAL nanoseconds have passed since reset
-                # send logs and restart normal operation
+                prev = time_ns()
+                if output <= END_POSITION and current_operation == Operation.NORMAL:
+                    continue
+
+                if current_operation != Operation.WAITING:
+                    current_operation = Operation.RESETTING
+
                 if (
-                    normal_operation == 0
-                    and abs(1 - output) <= TOLERANCE
-                    and curr - prev_ramp >= MAX_RAMP + STOP_INTERVAL
+                    abs(0.5 - output) <= TOLERANCE
+                    and current_operation != Operation.WAITING
                 ):
-                    normal_operation = 1
-                    prev_ramp = time_ns()
+                    prev_reset = time_ns()
+                    current_operation = Operation.WAITING
+
+                if curr - prev_reset >= STOP_INTERVAL and Operation.WAITING:
+                    iter_count += 1
+                    current_operation = Operation.NORMAL
+
+                if iter_count > N_ITER:
+                    exit()
     except (InvalidURI, OSError, InvalidHandshake, ConnectionClosedError) as e:
         print(f"Could not connect to server, error: {e}")
         sleep(2)

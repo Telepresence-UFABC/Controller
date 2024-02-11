@@ -9,6 +9,12 @@ PWM_FREQUENCY = 1_000
 PWM_MAX_RANGE = 32767
 
 
+class Operation:
+    NORMAL = 0
+    RESETTING = 1
+    WAITING = 2
+
+
 def control(input_coefs: list, output_coefs: list, input: list, output: list) -> float:
     return sum(c[0] * c[1] for c in zip(input_coefs, input)) + sum(
         c[0] * c[1] for c in zip(output_coefs, output)
