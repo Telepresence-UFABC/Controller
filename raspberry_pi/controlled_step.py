@@ -27,7 +27,8 @@ ANGLE_CONSTANT = 300 / 5
 # Load controller constants
 with open("../system_parameters/controller_pan.info", "r") as file:
     consts: dict = load(file)
-    C1, C2, C3 = consts["c1"], consts["c2"], consts["c3"]
+    PAN_OUTPUT_COEFS = consts["output"]
+    PAN_INPUT_COEFS = consts["input"]
 
 with open(
     "../mini_server/public/server_setup/setup.json",
@@ -36,9 +37,9 @@ with open(
     SETUP: dict = load(file)
     SERVER_IP: str = SETUP["SERVER_IP"]
 
-err = Measure()
-u = Measure()
-output = Measure()
+err = len(PAN_INPUT_COEFS) * [0]
+u = (len(PAN_OUTPUT_COEFS) + 1) * [0]
+output = [0, 0]
 
 ref = 1.5
 curr = time_ns()
@@ -57,10 +58,6 @@ def analog_read(pin: int = 0) -> float:
     return adc2voltage(adc.read_adc(pin, gain=GAIN))
 
 
-def control(err: Measure, u: Measure) -> float:
-    return C1 * u.prev + C2 * err.curr + C3 * err.prev
-
-
 while True:
     try:
         with connect(f"ws://{SERVER_IP}:3000") as websocket:
@@ -68,18 +65,21 @@ while True:
             while True:
                 curr = time_ns()
                 if curr - prev >= SAMPLING_INTERVAL:
-                    output.prev = output.curr
-                    output.curr = analog_read(VOLTAGE_READ_PIN) * VOLTAGE_CONSTANT
+                    output[1] = output[0]
+                    output[0] = analog_read(VOLTAGE_READ_PIN) * VOLTAGE_CONSTANT
 
                     # Update previous and current values
-                    err.prev = err.curr
-                    err.curr = ref * normal_operation - output.curr
+                    err.pop()
+                    err.insert(0, ref * normal_operation - output)
 
-                    u.prev = u.curr
-                    u.curr = control(err, u)
+                    u.pop()
+                    u.insert(
+                        0,
+                        control(PAN_INPUT_COEFS, PAN_OUTPUT_COEFS, err, u),
+                    )
 
                     # reference if normal operation, else move system to 0 position
-                    h_bridge_write(rpi, PIN_ONE, PIN_TWO, u.curr)
+                    h_bridge_write(rpi, PIN_ONE, PIN_TWO, u[0])
 
                     websocket.send(
                         dumps(
@@ -88,9 +88,9 @@ while True:
                                 "data": {
                                     "id": id,
                                     "Tempo": (curr - prev_reset) / 1e9,
-                                    "Saída": output.curr,
-                                    "Erro": err.curr,
-                                    "Esforço": u.curr,
+                                    "Saída": output[0],
+                                    "Erro": err[0],
+                                    "Esforço": u[0],
                                 },
                             }
                         )
@@ -107,7 +107,7 @@ while True:
                     # have elapsed since reset
                     # return to normal operation
                     if (
-                        abs(output.curr) <= TOLERANCE
+                        abs(output[0]) <= TOLERANCE
                         and curr - prev_reset >= RESET_INTERVAL + STOP_INTERVAL
                     ):
                         normal_operation = 1
