@@ -130,8 +130,8 @@ def main() -> None:
                         output_tilt = analog_read(TILT_READ_PIN) * VOLTAGE_CONSTANT
 
                         # Update previous and current values
-                        err_pan.pop()
-                        err_pan.insert(0, tilt - output_tilt)
+                        err_tilt.pop()
+                        err_tilt.insert(0, tilt - output_tilt)
 
                         u_tilt.pop()
                         u_tilt.insert(
@@ -158,7 +158,7 @@ def main() -> None:
                                 }
                         websocket.send(dumps(data))
 
-                        print(f"Pan: {output_pan / ANGLE_CONSTANT}, Esforco Pan: {u_pan[0]}, Erro Pan: {err_pan[0] / ANGLE_CONSTANT}\nTilt: {output_tilt / ANGLE_CONSTANT}, Esforco Tilt: {u_tilt[0]}, Erro Tilt: {err_tilt[0] / ANGLE_CONSTANT}")
+                        print(f"Pan: {output_pan / ANGLE_CONSTANT}, Esforco Pan: {u_pan[0]}, Erro Pan: {err_pan[0] / ANGLE_CONSTANT}\nTilt: {output_tilt / ANGLE_CONSTANT}, Esforco Tilt: {u_tilt[0]}, Erro Tilt: {err_tilt[0] / ANGLE_CONSTANT}\n\n")
 
                         prev = time_ns()
         except (InvalidURI, OSError, InvalidHandshake, ConnectionClosedError) as e:
