@@ -128,6 +128,13 @@ while True:
                             }
                         )
                     )
+
+                    print(f"Current Operation mode: {OPERATION_DICT[current_operation]}\n"
+                      f"Reference: {ref*VOLT2ANGLE}\n"
+                      f"Output: {output*VOLT2ANGLE}\n"
+                      f"Error: {err[0]*VOLT2ANGLE}\n"
+                      f"Effort: {u[0]}\n\n\n")
+                    
                 prev = time_ns()
 
                 if output[0] <= END_POSITION and current_operation == Operation.NORMAL:

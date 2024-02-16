@@ -14,6 +14,11 @@ class Operation:
     RESETTING = 1
     WAITING = 2
 
+OPERATION_DICT = {
+    Operation.NORMAL: "NORMAL",
+    Operation.RESETTING: "RESETTING",
+    Operation.WAITING: "WAITING"
+}
 
 def control(input_coefs: list, output_coefs: list, input: list, output: list) -> float:
     return sum(c[0] * c[1] for c in zip(input_coefs, input)) + sum(

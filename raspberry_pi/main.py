@@ -158,7 +158,12 @@ def main() -> None:
                                 }
                         websocket.send(dumps(data))
 
-                        print(f"Pan: {output_pan / ANGLE_CONSTANT}, Esforco Pan: {u_pan[0]}, Erro Pan: {err_pan[0] / ANGLE_CONSTANT}\nTilt: {output_tilt / ANGLE_CONSTANT}, Esforco Tilt: {u_tilt[0]}, Erro Tilt: {err_tilt[0] / ANGLE_CONSTANT}\n\n")
+                        print(f"Pan: {output_pan / ANGLE_CONSTANT}, "
+                            f"Esforco Pan: {u_pan[0]}, "
+                            f"Erro Pan: {err_pan[0] / ANGLE_CONSTANT}\n"
+                            f"Tilt: {output_tilt / ANGLE_CONSTANT}, "
+                            f"Esforco Tilt: {u_tilt[0]}, "
+                            f"Erro Tilt: {err_tilt[0] / ANGLE_CONSTANT}\n\n")
 
                         prev = time_ns()
         except (InvalidURI, OSError, InvalidHandshake, ConnectionClosedError) as e:
