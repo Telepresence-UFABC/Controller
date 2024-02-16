@@ -142,10 +142,8 @@ def main() -> None:
                         )
 
                         h_bridge_write(rpi, PIN_THREE, PIN_FOUR, u_tilt[0])
-
-                        websocket.send(
-                            dumps(
-                                {
+                        
+                        data = {
                                     "type": "log",
                                     "data": {
                                         "id": id,
@@ -158,8 +156,9 @@ def main() -> None:
                                         "Esforço Tilt": u_tilt[0],
                                     },
                                 }
-                            )
-                        )
+                        websocket.send(dumps(data))
+
+                        print(f"Pan: {output_pan / ANGLE_CONSTANT}, Esforco Pan: {u_pan[0]}, Erro Pan: {err_pan[0] / ANGLE_CONSTANT}\nTilt: {output_tilt / ANGLE_CONSTANT}, Esforco Tilt: {u_tilt[0]}, Erro Tilt: {err_tilt[0] / ANGLE_CONSTANT}")
 
                         prev = time_ns()
         except (InvalidURI, OSError, InvalidHandshake, ConnectionClosedError) as e:
