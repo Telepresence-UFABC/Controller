@@ -13,6 +13,8 @@ iter_count = 1
 id = f"ramp {dt.now().strftime('%Y-%m-%d %H_%M_%S')}"
 # Run new iteration every SAMPLING_INTERVAL nanoseconds
 SAMPLING_INTERVAL = 5 * 1e6
+# Reset to ZERO_POSITION after every test
+ZERO_POSITION = 0.5
 # Run new test after potentiometer measures END_POSITION V
 END_POSITION = 2.75
 # Stop for STOP_INTERVAL nanoseconds after reset
@@ -20,7 +22,7 @@ STOP_INTERVAL = 1 * 1e9
 # ADC gain set to GAIN
 GAIN = 1
 # Tolerance set to TOLERANCE
-TOLERANCE = 0.1
+TOLERANCE = 0.5
 # 3.3 V to 5 V
 VOLTAGE_CONSTANT = 5 / 3.3
 # 1V every 60 deg
@@ -45,7 +47,6 @@ u = (len(TILT_OUTPUT_COEFS) + 1) * [0]
 ref = 0
 output = 0
 prev = 0
-prev_reset = time_ns()
 current_operation = Operation.NORMAL
 
 i2c = busio.I2C(board.SCL, board.SDA)
@@ -60,7 +61,7 @@ def analog_read(pin: int = 0) -> float:
 
 
 # Move to zero position (30 degrees) to start testing
-while abs(0.5 - output) > TOLERANCE:
+while abs(ZERO_POSITION - output) > TOLERANCE:
     curr = time_ns()
     if curr - prev < SAMPLING_INTERVAL:
         continue
@@ -69,7 +70,7 @@ while abs(0.5 - output) > TOLERANCE:
 
     # Update previous and current values
     err.pop()
-    err.insert(0, 0.5 - output)
+    err.insert(0, ZERO_POSITION - output)
 
     u.pop()
     u.insert(
@@ -85,6 +86,7 @@ sleep(1)
 while True:
     try:
         with connect(f"ws://{SERVER_IP}:3000") as websocket:
+            prev_reset = time_ns()
             while True:
                 curr = time_ns()
                 if curr - prev < SAMPLING_INTERVAL:
@@ -96,7 +98,7 @@ while True:
 
                 # Update previous and current values
                 err.pop()
-                err.insert(0, 0.5 - output)
+                err.insert(0, ZERO_POSITION - output)
 
                 u.pop()
                 u.insert(
@@ -127,12 +129,14 @@ while True:
                         )
                     )
 
-                print(f"Current Operation mode: {OPERATION_DICT[current_operation]}\n"
-                      f"Reference: {ref*VOLT2ANGLE}\n"
-                      f"Output: {output*VOLT2ANGLE}\n"
-                      f"Error: {err[0]*VOLT2ANGLE}\n"
-                      f"Effort: {u[0]}\n\n\n")
-                
+                print(
+                    f"Current Operation mode: {current_operation}\n"
+                    f"Reference: {ref*VOLT2ANGLE}\n"
+                    f"Output: {output*VOLT2ANGLE}\n"
+                    f"Error: {err[0]*VOLT2ANGLE}\n"
+                    f"Effort: {u[0]}\n\n\n"
+                )
+
                 prev = time_ns()
                 if output <= END_POSITION and current_operation == Operation.NORMAL:
                     continue
@@ -141,13 +145,16 @@ while True:
                     current_operation = Operation.RESETTING
 
                 if (
-                    abs(0.5 - output) <= TOLERANCE
+                    abs(ZERO_POSITION - output) <= TOLERANCE
                     and current_operation != Operation.WAITING
                 ):
                     prev_reset = time_ns()
                     current_operation = Operation.WAITING
 
-                if curr - prev_reset >= STOP_INTERVAL and Operation.WAITING:
+                if (
+                    curr - prev_reset >= STOP_INTERVAL
+                    and current_operation == Operation.WAITING
+                ):
                     iter_count += 1
                     current_operation = Operation.NORMAL
 

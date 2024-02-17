@@ -20,7 +20,7 @@ STOP_INTERVAL = 1 * 1e9
 # ADC gain set to GAIN
 GAIN = 1
 # Tolerance set to TOLERANCE
-TOLERANCE = 0.1
+TOLERANCE = 0.5
 # 3.3 V to 5 V
 VOLTAGE_CONSTANT = 5 / 3.3
 # 1V every 60 deg
@@ -45,7 +45,6 @@ output = [5, 0]
 
 ref = 5
 prev = 0
-prev_reset = time_ns()
 current_operation = Operation.NORMAL
 
 i2c = busio.I2C(board.SCL, board.SDA)
@@ -85,6 +84,7 @@ sleep(1)
 while True:
     try:
         with connect(f"ws://{SERVER_IP}:3000") as websocket:
+            prev_reset = time_ns()
             while True:
                 curr = time_ns()
                 if curr - prev < SAMPLING_INTERVAL:
@@ -129,12 +129,14 @@ while True:
                         )
                     )
 
-                    print(f"Current Operation mode: {OPERATION_DICT[current_operation]}\n"
-                      f"Reference: {ref*VOLT2ANGLE}\n"
-                      f"Output: {output*VOLT2ANGLE}\n"
-                      f"Error: {err[0]*VOLT2ANGLE}\n"
-                      f"Effort: {u[0]}\n\n\n")
-                    
+                    print(
+                        f"Current Operation mode: {current_operation}\n"
+                        f"Reference: {ref*VOLT2ANGLE}\n"
+                        f"Output: {output*VOLT2ANGLE}\n"
+                        f"Error: {err[0]*VOLT2ANGLE}\n"
+                        f"Effort: {u[0]}\n\n\n"
+                    )
+
                 prev = time_ns()
 
                 if output[0] <= END_POSITION and current_operation == Operation.NORMAL:
@@ -150,7 +152,10 @@ while True:
                     prev_reset = time_ns()
                     current_operation = Operation.WAITING
 
-                if curr - prev_reset >= STOP_INTERVAL and Operation.WAITING:
+                if (
+                    curr - prev_reset >= STOP_INTERVAL
+                    and current_operation == Operation.WAITING
+                ):
                     iter_count += 1
                     current_operation = Operation.NORMAL
 

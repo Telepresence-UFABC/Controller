@@ -142,28 +142,30 @@ def main() -> None:
                         )
 
                         h_bridge_write(rpi, PIN_THREE, PIN_FOUR, u_tilt[0])
-                        
+
                         data = {
-                                    "type": "log",
-                                    "data": {
-                                        "id": id,
-                                        "Tempo": time,
-                                        "Saída Pan": output_pan / ANGLE_CONSTANT,
-                                        "Erro Pan": err_pan[0] / ANGLE_CONSTANT,
-                                        "Esforço Pan": u_pan[0],
-                                        "Saída Tilt": output_tilt / ANGLE_CONSTANT,
-                                        "Erro Tilt": err_tilt[0] / ANGLE_CONSTANT,
-                                        "Esforço Tilt": u_tilt[0],
-                                    },
-                                }
+                            "type": "log",
+                            "data": {
+                                "id": id,
+                                "Tempo": time,
+                                "Saída Pan": output_pan / ANGLE_CONSTANT,
+                                "Erro Pan": err_pan[0] / ANGLE_CONSTANT,
+                                "Esforço Pan": u_pan[0],
+                                "Saída Tilt": output_tilt / ANGLE_CONSTANT,
+                                "Erro Tilt": err_tilt[0] / ANGLE_CONSTANT,
+                                "Esforço Tilt": u_tilt[0],
+                            },
+                        }
                         websocket.send(dumps(data))
 
-                        print(f"Pan: {output_pan / ANGLE_CONSTANT}, "
+                        print(
+                            f"Pan: {output_pan / ANGLE_CONSTANT}, "
                             f"Esforco Pan: {u_pan[0]}, "
                             f"Erro Pan: {err_pan[0] / ANGLE_CONSTANT}\n"
                             f"Tilt: {output_tilt / ANGLE_CONSTANT}, "
                             f"Esforco Tilt: {u_tilt[0]}, "
-                            f"Erro Tilt: {err_tilt[0] / ANGLE_CONSTANT}\n\n")
+                            f"Erro Tilt: {err_tilt[0] / ANGLE_CONSTANT}\n\n"
+                        )
 
                         prev = time_ns()
         except (InvalidURI, OSError, InvalidHandshake, ConnectionClosedError) as e:
