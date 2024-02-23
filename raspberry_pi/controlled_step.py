@@ -8,8 +8,7 @@ from websockets.exceptions import InvalidURI, InvalidHandshake, ConnectionClosed
 from controller import *
 
 VOLTAGE_READ_PIN = 0
-N_ITER = 10
-iter_count = 1
+N_ITER = 5
 id = f"controlled_step {dt.now().strftime('%Y-%m-%d %H_%M_%S')}"
 # Run new iteration every SAMPLING_INTERVAL nanoseconds
 SAMPLING_INTERVAL = 5 * 1e6
@@ -43,7 +42,7 @@ err = len(PAN_INPUT_COEFS) * [0]
 u = (len(PAN_OUTPUT_COEFS) + 1) * [0]
 output = 5
 
-ref = 1.5
+refs = [0.5 + 0.25 * inc for inc in range(15)]
 prev = 0
 current_operation = Operation.NORMAL
 
@@ -84,78 +83,79 @@ sleep(1)
 while True:
     try:
         with connect(f"ws://{SERVER_IP}:3000") as websocket:
-            prev_reset = time_ns()
-            while True:
-                curr = time_ns()
-                if curr - prev < SAMPLING_INTERVAL:
-                    continue
-
-                output = analog_read(VOLTAGE_READ_PIN) * VOLTAGE_CONSTANT
-
-                # Update previous and current values
-                err.pop()
-                err.insert(0, ref * (current_operation == Operation.NORMAL) - output)
-
-                u.pop()
-                u.insert(
-                    0,
-                    control(PAN_INPUT_COEFS, PAN_OUTPUT_COEFS, err, u),
-                )
-
-                # reference if normal operation, else move system to 0 position
-                h_bridge_write(rpi, PIN_ONE, PIN_TWO, u[0])
-
-                if current_operation == Operation.NORMAL:
-                    time = (curr - prev_reset - STOP_INTERVAL * (iter_count > 1)) / 1e9
-                    websocket.send(
-                        dumps(
-                            {
-                                "type": "log",
-                                "data": {
-                                    "id": f"{iter_count}_{id}",
-                                    "Tempo": time,
-                                    "Saída": output * VOLT2ANGLE,
-                                    "Erro": err[0] * VOLT2ANGLE,
-                                    "Esforço": u[0],
-                                },
-                            }
-                        )
-                    )
-
-                print(
-                    f"Current Operation mode: {current_operation}\n"
-                    f"Reference: {ref*VOLT2ANGLE}\n"
-                    f"Output: {output*VOLT2ANGLE}\n"
-                    f"Error: {err[0]*VOLT2ANGLE}\n"
-                    f"Effort: {u[0]}\n\n\n"
-                )
-
-                prev = time_ns()
-
-                if (
-                    curr - prev_reset - STOP_INTERVAL * (iter_count > 1)
-                ) <= TEST_TIME and current_operation == Operation.NORMAL:
-                    continue
-
-                if current_operation == Operation.NORMAL:
-                    current_operation = Operation.RESETTING
-
-                if (
-                    abs(output) <= TOLERANCE
-                    and current_operation == Operation.RESETTING
-                ):
+            for ref in refs:
+                for i in range(N_ITER):
                     prev_reset = time_ns()
-                    current_operation = Operation.WAITING
+                    while True:
+                        curr = time_ns()
+                        if curr - prev < SAMPLING_INTERVAL:
+                            continue
 
-                if (
-                    curr - prev_reset >= STOP_INTERVAL
-                    and current_operation == Operation.WAITING
-                ):
-                    iter_count += 1
-                    current_operation = Operation.NORMAL
+                        output = analog_read(VOLTAGE_READ_PIN) * VOLTAGE_CONSTANT
 
-                if iter_count > N_ITER:
-                    exit()
+                        # Update previous and current values
+                        err.pop()
+                        err.insert(
+                            0, ref * (current_operation == Operation.NORMAL) - output
+                        )
+
+                        u.pop()
+                        u.insert(
+                            0,
+                            control(PAN_INPUT_COEFS, PAN_OUTPUT_COEFS, err, u),
+                        )
+
+                        # reference if normal operation, else move system to 0 position
+                        h_bridge_write(rpi, PIN_ONE, PIN_TWO, u[0])
+
+                        if current_operation == Operation.NORMAL:
+                            time = (curr - prev_reset - STOP_INTERVAL * (i > 0)) / 1e9
+                            websocket.send(
+                                dumps(
+                                    {
+                                        "type": "log",
+                                        "data": {
+                                            "id": f"{ref * VOLT2ANGLE}_deg_{i+1}_{id}",
+                                            "Tempo": time,
+                                            "Saída": output * VOLT2ANGLE,
+                                            "Erro": err[0] * VOLT2ANGLE,
+                                            "Esforço": u[0],
+                                        },
+                                    }
+                                )
+                            )
+
+                        print(
+                            f"Current Operation mode: {current_operation}\n"
+                            f"Reference: {ref*VOLT2ANGLE}\n"
+                            f"Output: {output*VOLT2ANGLE}\n"
+                            f"Error: {err[0]*VOLT2ANGLE}\n"
+                            f"Effort: {u[0]}\n\n\n"
+                        )
+
+                        prev = time_ns()
+
+                        if (
+                            curr - prev_reset - STOP_INTERVAL * (i > 0)
+                        ) <= TEST_TIME and current_operation == Operation.NORMAL:
+                            continue
+
+                        if current_operation == Operation.NORMAL:
+                            current_operation = Operation.RESETTING
+
+                        if (
+                            abs(output) <= TOLERANCE
+                            and current_operation == Operation.RESETTING
+                        ):
+                            prev_reset = time_ns()
+                            current_operation = Operation.WAITING
+
+                        if (
+                            curr - prev_reset >= STOP_INTERVAL
+                            and current_operation == Operation.WAITING
+                        ):
+                            current_operation = Operation.NORMAL
+                            break
 
     except (InvalidURI, OSError, InvalidHandshake, ConnectionClosedError) as e:
         print(f"Could not connect to server, error: {e}")
