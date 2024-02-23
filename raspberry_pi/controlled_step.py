@@ -134,7 +134,7 @@ while True:
 
                 if (
                     curr - prev_reset - STOP_INTERVAL * (iter_count > 1)
-                ) >= TEST_TIME and current_operation == Operation.NORMAL:
+                ) <= TEST_TIME and current_operation == Operation.NORMAL:
                     continue
 
                 if current_operation == Operation.NORMAL:
