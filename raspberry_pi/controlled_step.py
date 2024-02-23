@@ -13,8 +13,8 @@ iter_count = 1
 id = f"controlled_step {dt.now().strftime('%Y-%m-%d %H_%M_%S')}"
 # Run new iteration every SAMPLING_INTERVAL nanoseconds
 SAMPLING_INTERVAL = 5 * 1e6
-# Run new test after potentiometer measures END_POSITION V
-END_POSITION = 4.5
+# Reset after TEST_TIME nanoseconds
+TEST_TIME = 3 * 1e9
 # Stop for STOP_INTERVAL nanoseconds after reset
 STOP_INTERVAL = 1 * 1e9
 # ADC gain set to GAIN
@@ -132,7 +132,9 @@ while True:
 
                 prev = time_ns()
 
-                if output <= END_POSITION and current_operation == Operation.NORMAL:
+                if (
+                    curr - prev_reset - STOP_INTERVAL * (iter_count > 1)
+                ) >= TEST_TIME and current_operation == Operation.NORMAL:
                     continue
 
                 if current_operation == Operation.NORMAL:
