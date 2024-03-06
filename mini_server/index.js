@@ -2,7 +2,7 @@ import express from "express";
 import { WebSocket, WebSocketServer } from "ws";
 import { v4 } from "uuid";
 import { spawn } from "child_process";
-import { appendFile, existsSync, writeFileSync, readdir, readFile } from "fs";
+import { appendFileSync, existsSync, writeFileSync, readdir, readFile } from "fs";
 import { networkInterfaces } from "os";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
@@ -28,7 +28,7 @@ const SETUP = {
     WIDTH: 640,
     HEIGHT: 480,
     RPI_WIDTH: 320,
-    RPI_HEIGHT: 240
+    RPI_HEIGHT: 240,
 };
 
 const state = {
@@ -147,9 +147,12 @@ function logToFile(message) {
     const header = Object.keys(message.data).filter((k) => k !== "id");
 
     if (!existsSync(path)) {
-        appendFile(path, header.join(",") + "\n", (err) => {
-            if (err) console.log("Couldn't log to file");
-        });
+        try {
+            appendFileSync(path, header.join(",") + "\n");
+        } catch (err) {
+            console.log("Couldn't log to file");
+            return;
+        }
     }
     appendFile(path, header.map((k) => message.data[k]).join(",") + "\n", (err) => {
         if (err) console.log("Couldn't log to file");
