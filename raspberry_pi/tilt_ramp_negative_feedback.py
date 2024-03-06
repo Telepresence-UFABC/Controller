@@ -98,7 +98,12 @@ while True:
 
                 # Update previous and current values
                 err.pop()
-                err.insert(0, ZERO_POSITION - output)
+                err.insert(
+                    0,
+                    ref * (current_operation == Operation.NORMAL)
+                    + ZERO_POSITION
+                    - output,
+                )
 
                 u.pop()
                 u.insert(

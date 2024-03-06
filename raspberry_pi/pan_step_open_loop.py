@@ -41,7 +41,7 @@ with open(
 
 err = len(PAN_INPUT_COEFS) * [0]
 u = (len(PAN_OUTPUT_COEFS) + 1) * [0]
-output = [5, 0]
+output = [0, 0]
 
 ref = 5
 prev = 0
@@ -58,6 +58,7 @@ def analog_read(pin: int = 0) -> float:
     return AnalogIn(adc, pin).voltage
 
 
+output[0] = analog_read(VOLTAGE_READ_PIN) * VOLTAGE_CONSTANT
 # Move to zero position to start testing
 while abs(output[0]) > TOLERANCE:
     curr = time_ns()
@@ -132,7 +133,7 @@ while True:
                     print(
                         f"Current Operation mode: {current_operation}\n"
                         f"Reference: {ref*VOLT2ANGLE}\n"
-                        f"Output: {output*VOLT2ANGLE}\n"
+                        f"Output: {output[0]*VOLT2ANGLE}\n"
                         f"Error: {err[0]*VOLT2ANGLE}\n"
                         f"Effort: {u[0]}\n\n\n"
                     )
