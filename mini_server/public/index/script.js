@@ -1,19 +1,20 @@
 const state = {
-    pan: 0,
-    tilt: 0,
-    auto: false,
-},
+        pan: 0,
+        tilt: 0,
+        auto: false,
+    },
     remoteVideoPlayer = document.querySelector("#remote-video-player"),
     videoPlayer = document.querySelector("#video-player"),
     websocket = new WebSocket(`ws://${SERVER_IP}:3000`);
 
 websocket.addEventListener("open", (event) => {
-    websocket.send(JSON.stringify(
-        {
+    websocket.send(
+        JSON.stringify({
             type: "messages",
-            messages: ["pose", "video", "remote_video", "auto_state"]
-        }))
-})
+            messages: ["pose", "video", "remote_video", "auto_state"],
+        })
+    );
+});
 
 websocket.addEventListener("message", (event) => {
     const message = JSON.parse(event.data);
@@ -72,6 +73,17 @@ sliders.forEach((slider) => {
     });
 });
 
+// Control inputs
+const panInput = document.querySelector("#pan-input");
+const tiltInput = document.querySelector("#tilt-input");
+
+const confirmButton = document.querySelector("button");
+confirmButton.addEventListener("click", () => {
+    state.pan = panInput.value === "" ? state.pan : Number(panInput.value);
+    state.tilt = tiltInput.value === "" ? state.tilt : Number(tiltInput.value);
+    sendPose();
+});
+
 // Update sliders with server state
 function updateSliders(message) {
     sliders.forEach((slider) => {
@@ -83,6 +95,16 @@ function updateSliders(message) {
 // Update auto button with server state
 function updateAutoButton(message) {
     auto.checked = message.auto;
+    state.auto = message.auto;
+    toggleEnable();
+}
+
+function toggleEnable() {
+    sliders.forEach((slider) => {
+        slider.disabled = state.auto;
+    });
+    panInput.disabled = state.auto;
+    tiltInput.disabled = state.auto;
 }
 
 async function sendPose() {
@@ -102,4 +124,5 @@ async function sendAutoState() {
             auto: state.auto,
         })
     );
+    toggleEnable();
 }

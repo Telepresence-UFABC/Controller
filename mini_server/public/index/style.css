@@ -107,6 +107,35 @@ input[type="checkbox"]:checked:hover + label {
     font-weight: bold;
 }
 
+.control-keyboard {
+    display: grid;
+    grid-template-rows: repeat(2, auto);
+}
+
+input[name="control-input"] {
+    width: 5em;
+    font-size: 1.5em;
+    text-align: center;
+}
+
+.control-input-bundle {
+    display: grid;
+    grid-template-columns: repeat(2, auto);
+    gap: 1em;
+}
+
+button {
+    width: 6em;
+    height: 2em;
+    margin: auto;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
 a {
     text-decoration: none;
     font-size: 2em;
