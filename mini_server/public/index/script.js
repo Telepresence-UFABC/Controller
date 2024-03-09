@@ -29,17 +29,38 @@ websocket.addEventListener("message", (event) => {
             updateAutoButton(message);
             break;
         case "remote_video":
-            const remoteVideoBlob = base64ToBlob(message.media);
-            const remoteFrameURL = URL.createObjectURL(remoteVideoBlob);
-            remoteVideoPlayer.src = remoteFrameURL;
+            const remoteImg = new Image();
+            remoteImg.src = "data:image/jpg;base64," + message.media;
+            remoteImg.onload = function () {
+                const ctx = remoteVideoPlayer.getContext("2d");
+                ctx.drawImage(remoteImg, 0, 0, remoteVideoPlayer.width, remoteVideoPlayer.height);
+                drawGrid(ctx, remoteVideoPlayer.width, remoteVideoPlayer.height, 32);
+            };
             break;
         case "video":
-            const videoBlob = base64ToBlob(message.media);
-            const frameURL = URL.createObjectURL(videoBlob);
-            videoPlayer.src = frameURL;
+            const localImg = new Image();
+            localImg.src = "data:image/jpg;base64," + message.media;
+            localImg.onload = function () {
+                const ctx = videoPlayer.getContext("2d");
+                ctx.drawImage(localImg, 0, 0, videoPlayer.width, videoPlayer.height);
+            };
             break;
     }
 });
+
+function drawGrid(ctx, width, height, gridSize) {
+    ctx.beginPath();
+    for (var x = 0; x <= width; x += gridSize) {
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+    }
+    for (var y = 0; y <= height; y += gridSize) {
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+    }
+    ctx.strokeStyle = "rgba(0, 0, 0, 0.5)";
+    ctx.stroke();
+}
 
 function base64ToBlob(base64String) {
     const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
