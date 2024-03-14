@@ -2,7 +2,7 @@ import express from "express";
 import { WebSocket, WebSocketServer } from "ws";
 import { v4 } from "uuid";
 import { spawn } from "child_process";
-import { appendFileSync, existsSync, writeFileSync, readdir, readFile } from "fs";
+import { appendFile, appendFileSync, existsSync, writeFileSync, readdir, readFile } from "fs";
 import { networkInterfaces } from "os";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
