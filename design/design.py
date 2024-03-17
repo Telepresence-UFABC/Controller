@@ -175,7 +175,7 @@ def design_pid_computational(
             stats = ct.step_info(ct.feedback(gc * sys))
             if stats["Overshoot"] / 100 <= overshoot and stats["SettlingTime"] <= ts:
                 if not discrete:
-                    return sys, gc
+                    return gc
                 kp = 2 * k * a
                 ki = k * a**2
                 kd = k
