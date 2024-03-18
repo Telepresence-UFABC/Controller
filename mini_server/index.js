@@ -34,6 +34,7 @@ const SETUP = {
 const state = {
     pan: 0,
     tilt: 0,
+    fex: "N",
     auto: true,
 };
 
@@ -60,31 +61,38 @@ const server = app.listen(port);
 
 // Handling de request do servidor soquete
 wsServer.on("connection", function (connection) {
-    const userId = v4();
-    clients[userId] = { connection, messages: [] };
+    const userID = v4();
+    clients[userID] = { connection, messages: [] };
     console.log("Server: Connection established");
 
-    connection.on("close", () => handleDisconnect(userId));
+    connection.on("close", () => handleDisconnect(userID));
 
     connection.on("message", function (message) {
         message = JSON.parse(message.toString());
         switch (message.type) {
             case "messages":
-                clients[userId].messages = message.messages;
+                clients[userID].messages = message.messages;
 
-                distributeData({ type: "pose", pan: state.pan, tilt: state.tilt });
-                distributeData({ type: "auto_state", auto: state.auto });
+                distributeData({ type: "pose", pan: state.pan, tilt: state.tilt }, 0);
+                distributeData({ type: "fex", fex: state.fex }, 0);
+                distributeData({ type: "auto_state", auto: state.auto }, 0);
+                break;
+            case "fex":
+                state.fex = message.fex === "ND" ? "N" : message.fex;
                 break;
             case "auto_pose":
                 if (state.auto) {
                     state.pan = message.pan;
                     state.tilt = message.tilt;
 
-                    distributeData({
-                        type: "pose",
-                        pan: state.pan,
-                        tilt: state.tilt,
-                    });
+                    distributeData(
+                        {
+                            type: "pose",
+                            pan: state.pan,
+                            tilt: state.tilt,
+                        },
+                        userID
+                    );
                 }
                 break;
             case "manual_pose":
@@ -92,24 +100,27 @@ wsServer.on("connection", function (connection) {
                     state.pan = message.pan;
                     state.tilt = message.tilt;
 
-                    distributeData({
-                        type: "pose",
-                        pan: state.pan,
-                        tilt: state.tilt,
-                    });
+                    distributeData(
+                        {
+                            type: "pose",
+                            pan: state.pan,
+                            tilt: state.tilt,
+                        },
+                        userID
+                    );
                 }
                 break;
             case "auto_state":
                 state.auto = message.auto;
 
-                distributeData(message);
+                distributeData(message, userID);
                 break;
             case "log":
                 logToFile(message);
             case "interface_video":
             case "remote_video":
             case "rtc":
-                distributeData(message);
+                distributeData(message, userID);
                 break;
             default:
                 console.log(`Unsupported message type: ${message.type}`);
@@ -129,18 +140,21 @@ server.on("upgrade", (req, socket, head) => {
 const clients = {};
 
 // envia um arquivo json para todos os usuarios conectados ao servidor ws
-function distributeData(message) {
+function distributeData(message, userID) {
     const data = JSON.stringify(message);
-    Object.values(clients).forEach((client) => {
-        if (client.connection.readyState === WebSocket.OPEN && client.messages.includes(message.type)) {
+    Object.entries(clients).forEach(([ID, client]) => {
+        if (client.connection.readyState !== WebSocket.OPEN) {
+            return;
+        }
+        if (ID !== userID && client.messages.includes(message.type)) {
             client.connection.send(data);
         }
     });
 }
 
-function handleDisconnect(userId) {
-    console.log(`${userId} disconnected.`);
-    delete clients[userId];
+function handleDisconnect(userID) {
+    console.log(`${userID} disconnected.`);
+    delete clients[userID];
 }
 
 function logToFile(message) {
