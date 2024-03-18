@@ -11,7 +11,7 @@ websocket.addEventListener("open", (event) => {
     websocket.send(
         JSON.stringify({
             type: "messages",
-            messages: ["pose", "video", "remote_video", "auto_state"],
+            messages: ["pose", "interface_video", "remote_video", "auto_state"],
         })
     );
 });
@@ -37,7 +37,7 @@ websocket.addEventListener("message", (event) => {
                 drawGrid(ctx, remoteVideoPlayer.width, remoteVideoPlayer.height, 32);
             };
             break;
-        case "video":
+        case "interface_video":
             const localImg = new Image();
             localImg.src = "data:image/jpg;base64," + message.media;
             localImg.onload = function () {

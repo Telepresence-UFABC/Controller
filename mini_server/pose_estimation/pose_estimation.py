@@ -23,6 +23,7 @@ class Landmark:
     RIGHT_EYE = 263
     RIGHT_MOUTH = 291
 
+
 pan = 0
 tilt = 0
 z = 0
@@ -131,7 +132,9 @@ while True:
                     ok, video_buffer = cv2.imencode(".jpg", frame)
                     frame = base64.b64encode(video_buffer).decode("utf-8")
 
-                    websocket.send(json.dumps({"type": "video", "media": frame}))
+                    websocket.send(
+                        json.dumps({"type": "interface_video", "media": frame})
+                    )
 
     except (InvalidURI, OSError, InvalidHandshake, ConnectionClosedError) as e:
         print(f"Could not connect to server, error: {e}")

@@ -16,12 +16,61 @@
                 <canvas width="160" height="120" id="video-player"></canvas>
                 <canvas width="640" height="480" id="remote-video-player"></canvas>
             </div>
-            <div>
-                <input type="checkbox" id="auto" />
-                <label class="checkbox-label" for="auto">
-                    <img src="/img/video_on.svg" alt="Obtenção automática da pose" />
-                </label>
-                <p>Obtenção automática da pose</p>
+            <div class="call-buttons">
+                <div class="call-button">
+                    <input type="checkbox" id="mic" />
+                    <label class="checkbox-label" for="mic">
+                        <img class="call-img" src="/img/mic_on.svg" alt="Microfone" />
+                        <p>Microfone</p>
+                    </label>
+                </div>
+                <div class="call-button">
+                    <input type="checkbox" id="auto" />
+                    <label class="checkbox-label" for="auto">
+                        <img class="call-img" src="/img/video_on.svg" alt="Câmera" />
+                        <p>Câmera</p>
+                    </label>
+                </div>
+                <div class="call-button">
+                    <input type="checkbox" id="volume" />
+                    <label class="checkbox-label" for="volume">
+                        <img class="call-img" src="/img/volume_on.svg" alt="Áudio" />
+                        <p>Áudio</p>
+                    </label>
+                </div>
+            </div>
+            <div class="call-buttons">
+                <div class="expression-button">
+                    <input type="radio" id="F" name="expression" value="F" />
+                    <label class="checkbox-label" for="F">
+                        <span class="emoji">😀</span>
+                        <p>Felicidade</p>
+                    </label>
+                </div>
+
+                <div class="expression-button">
+                    <input type="radio" id="S" name="expression" value="S" />
+                    <label class="checkbox-label" for="S">
+                        <span class="emoji">😮</span>
+                        <p>Surpresa</p>
+                    </label>
+                </div>
+
+                <div class="expression-button">
+                    <input type="radio" id="D" name="expression" value="D" />
+                    <label class="checkbox-label" for="D">
+                        <span class="emoji">🤔</span>
+                        <p>Dúvida</p>
+                    </label>
+                </div>
+
+                <div class="expression-button">
+                    <input type="radio" id="N" name="expression" value="N" />
+                    <label class="checkbox-label" for="N">
+                        <span class="emoji">😐</span>
+                        <p>Neutro</p>
+                    </label>
+                </div>
             </div>
             <div class="sliders">
                 <div class="slider-container">
