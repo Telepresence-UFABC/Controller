@@ -1,0 +1,21 @@
+body {
+    margin: 0;
+    padding: 0;
+}
+#video-player {
+    height: 100vh;
+    margin: auto;
+    display: block;
+}
+#audio-player {
+    display: none;
+}
+#audio-toggle {
+    width: 5em;
+    position: fixed;
+    top: 5em;
+    right: 5em;
+}
+#audio-toggle:hover {
+    cursor: pointer;
+}

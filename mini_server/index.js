@@ -192,6 +192,11 @@ app.get("/dataviz", function (req, res) {
     res.render("pages/dataviz");
 });
 
+// Facial expressions
+app.get("/expression", function (req, res) {
+    res.render("pages/expression");
+});
+
 // Log file names
 app.get("/log_names", function (req, res) {
     let fileNames;
@@ -201,7 +206,7 @@ app.get("/log_names", function (req, res) {
     });
 });
 
-// Data from çpg file
+// Data from log file
 app.get("/get_log", function (req, res) {
     const fileName = req.query.file;
     readFile(join(SETUP.LOG_PATH, fileName), (err, data) => {
