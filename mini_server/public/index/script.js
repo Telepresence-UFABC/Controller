@@ -125,7 +125,6 @@ function createdDescription(description) {
 // Call buttons
 const mic = document.querySelector("#mic");
 mic.addEventListener("change", (event) => {
-    console.log("entrou");
     state.mic = event.target.checked;
     localStream.getAudioTracks()[0].enabled = state.mic;
 });
