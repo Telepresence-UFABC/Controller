@@ -1,12 +1,12 @@
 const state = {
-        pan: 0,
-        tilt: 0,
-        fex: "N",
-        auto: false,
-        mic: true,
-        video: true,
-        volume: true,
-    },
+    pan: 0,
+    tilt: 0,
+    fex: "N",
+    auto: false,
+    mic: true,
+    video: true,
+    volume: true,
+},
     peerConnectionConfig = {
         iceServers: [{ urls: "stun:stun.stunprotocol.org:3478" }, { urls: "stun:stun.l.google.com:19302" }],
     },
@@ -215,13 +215,13 @@ async function sendFex() {
 }
 
 async function sendPose() {
-    websocket.send(
-        JSON.stringify({
-            type: "manual_pose",
-            pan: state.pan,
-            tilt: state.tilt,
-        })
-    );
+    const message = {
+        type: "manual_pose",
+        pan: state.pan,
+        tilt: state.tilt,
+    };
+    websocket.send(JSON.stringify(message));
+    updateSliders(message);
 }
 
 async function sendAutoState() {
