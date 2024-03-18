@@ -79,6 +79,14 @@ wsServer.on("connection", function (connection) {
                 break;
             case "fex":
                 state.fex = message.fex === "ND" ? "N" : message.fex;
+
+                distributeData(
+                    {
+                        type: "fex",
+                        fex: state.fex,
+                    },
+                    userID
+                );
                 break;
             case "auto_pose":
                 if (state.auto) {
@@ -112,15 +120,13 @@ wsServer.on("connection", function (connection) {
                 break;
             case "auto_state":
                 state.auto = message.auto;
-
-                distributeData(message, userID);
-                break;
-            case "log":
-                logToFile(message);
             case "interface_video":
             case "remote_video":
             case "rtc":
                 distributeData(message, userID);
+                break;
+            case "log":
+                logToFile(message);
                 break;
             default:
                 console.log(`Unsupported message type: ${message.type}`);
