@@ -12,13 +12,14 @@
             <a href="/dataviz">Visualização de dados</a>
         </header>
         <main>
+            <audio autoplay id="remote-audio"></audio>
             <div class="video-container">
                 <canvas width="160" height="120" id="video-player"></canvas>
                 <canvas width="640" height="480" id="remote-video-player"></canvas>
             </div>
             <div class="call-buttons">
                 <div class="call-button">
-                    <input type="checkbox" id="mic" />
+                    <input type="checkbox" id="mic" checked />
                     <label class="checkbox-label" for="mic">
                         <img class="call-img" src="/img/mic_on.svg" alt="Microfone" />
                         <p>Microfone</p>
@@ -32,7 +33,7 @@
                     </label>
                 </div>
                 <div class="call-button">
-                    <input type="checkbox" id="volume" />
+                    <input type="checkbox" id="volume" checked />
                     <label class="checkbox-label" for="volume">
                         <img class="call-img" src="/img/volume_on.svg" alt="Áudio" />
                         <p>Áudio</p>

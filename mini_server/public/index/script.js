@@ -1,24 +1,41 @@
 const state = {
         pan: 0,
         tilt: 0,
+        fex: "N",
         auto: false,
+        mic: true,
+        video: true,
+        volume: true,
+    },
+    peerConnectionConfig = {
+        iceServers: [{ urls: "stun:stun.stunprotocol.org:3478" }, { urls: "stun:stun.l.google.com:19302" }],
     },
     remoteVideoPlayer = document.querySelector("#remote-video-player"),
-    videoPlayer = document.querySelector("#video-player"),
-    websocket = new WebSocket(`ws://${SERVER_IP}:3000`);
+    audioPlayer = document.querySelector("#remote-audio");
+(videoPlayer = document.querySelector("#video-player")),
+    (websocket = new WebSocket(`ws://${SERVER_IP}:3000`));
 
-websocket.addEventListener("open", (event) => {
+let localStream, peerConnection;
+
+websocket.addEventListener("open", async (event) => {
     websocket.send(
         JSON.stringify({
             type: "messages",
-            messages: ["pose", "interface_video", "remote_video", "auto_state"],
+            messages: ["pose", "interface_video", "remote_video", "auto_state", "rtc"],
         })
     );
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    localStream = stream;
+    startConnection(true);
 });
 
 websocket.addEventListener("message", (event) => {
     const message = JSON.parse(event.data);
     switch (message.type) {
+        case "fex":
+            state.fex = message.fex;
+            updateFacialExpression(message);
+            break;
         case "pose":
             state.pan = message.pan;
             state.tilt = message.tilt;
@@ -45,6 +62,18 @@ websocket.addEventListener("message", (event) => {
                 ctx.drawImage(localImg, 0, 0, videoPlayer.width, videoPlayer.height);
             };
             break;
+        case "rtc":
+            if (!peerConnection) startConnection(false);
+            const signal = message.data;
+            if (signal.sdp) {
+                peerConnection.setRemoteDescription(new RTCSessionDescription(signal.sdp)).then(() => {
+                    if (signal.sdp.type !== "offer") return;
+                    peerConnection.createAnswer().then(createdDescription);
+                });
+            } else if (signal.ice) {
+                peerConnection.addIceCandidate(new RTCIceCandidate(signal.ice));
+            }
+            break;
     }
 });
 
@@ -62,24 +91,70 @@ function drawGrid(ctx, width, height, gridSize) {
     ctx.stroke();
 }
 
-function base64ToBlob(base64String) {
-    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-    const base64 = (base64String + padding).replace(/\-/g, "+").replace(/_/g, "/");
-    const binaryString = window.atob(base64);
-    const byteArrays = [];
-    for (let i = 0; i < binaryString.length; i++) {
-        byteArrays.push(binaryString.charCodeAt(i));
+function startConnection(isCaller) {
+    peerConnection = new RTCPeerConnection(peerConnectionConfig);
+    peerConnection.onicecandidate = (event) => {
+        if (event.candidate != null) {
+            websocket.send(JSON.stringify({ type: "rtc", data: { ice: event.candidate } }));
+        }
+    };
+    peerConnection.ontrack = (event) => {
+        audioPlayer.srcObject = event.streams[0];
+    };
+
+    for (const track of localStream.getTracks()) {
+        peerConnection.addTrack(track, localStream);
     }
-    const byteArray = new Uint8Array(byteArrays);
-    return new Blob([byteArray]);
+
+    if (isCaller) {
+        peerConnection.createOffer().then(createdDescription);
+    }
+}
+
+function createdDescription(description) {
+    peerConnection.setLocalDescription(description).then(() => {
+        websocket.send(
+            JSON.stringify({
+                type: "rtc",
+                data: { sdp: peerConnection.localDescription },
+            })
+        );
+    });
 }
 
 // Call buttons
+const mic = document.querySelector("#mic");
+mic.addEventListener("change", (event) => {
+    console.log("entrou");
+    state.mic = event.target.checked;
+    localStream.getAudioTracks()[0].enabled = state.mic;
+});
+
 const auto = document.querySelector("#auto");
 auto.addEventListener("change", (event) => {
     state.auto = event.target.checked;
     sendAutoState(state.auto);
 });
+
+const volume = document.querySelector("#volume");
+volume.addEventListener("change", (event) => {
+    state.volume = event.target.checked;
+    audioPlayer.muted = !state.volume;
+});
+
+// Expression buttons
+const expressionButtons = document.querySelectorAll('input[name="expression"]');
+expressionButtons.forEach((button) => {
+    button.addEventListener("change", () => {
+        state.fex = button.value;
+        sendFex();
+    });
+});
+
+// Updates expression to the last value sent
+function updateFacialExpression(message) {
+    document.getElementById(message.fex).checked = true;
+}
 
 // Servo sliders
 const sliders = document.querySelectorAll('input[type="range"]');
@@ -124,8 +199,20 @@ function toggleEnable() {
     sliders.forEach((slider) => {
         slider.disabled = state.auto;
     });
+    expressionButtons.forEach((button) => {
+        button.disabled = state.auto;
+    });
     panInput.disabled = state.auto;
     tiltInput.disabled = state.auto;
+}
+
+async function sendFex() {
+    websocket.send(
+        JSON.stringify({
+            type: "fex",
+            fex: state.fex,
+        })
+    );
 }
 
 async function sendPose() {
