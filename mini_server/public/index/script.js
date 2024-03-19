@@ -1,12 +1,12 @@
 const state = {
-    pan: 0,
-    tilt: 0,
-    fex: "N",
-    auto: false,
-    mic: true,
-    video: true,
-    volume: true,
-},
+        pan: 0,
+        tilt: 0,
+        fex: "N",
+        auto: false,
+        mic: true,
+        video: true,
+        volume: true,
+    },
     peerConnectionConfig = {
         iceServers: [{ urls: "stun:stun.stunprotocol.org:3478" }, { urls: "stun:stun.l.google.com:19302" }],
     },
@@ -21,7 +21,7 @@ websocket.addEventListener("open", async (event) => {
     websocket.send(
         JSON.stringify({
             type: "messages",
-            messages: ["pose", "interface_video", "remote_video", "auto_state", "rtc"],
+            messages: ["fex", "pose", "interface_video", "remote_video", "auto_state", "rtc"],
         })
     );
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
@@ -152,6 +152,7 @@ expressionButtons.forEach((button) => {
 
 // Updates expression to the last value sent
 function updateFacialExpression(message) {
+    console.log("rodou");
     document.getElementById(message.fex).checked = true;
 }
 
