@@ -25,6 +25,7 @@ const SETUP = {
     SERVER_IP: ip,
     POSE_ESTIMATION_PROGRAM: join(__dirname, "pose_estimation/pose_estimation.py"),
     LOG_PATH: join(__dirname, "../logs"),
+    FACE_DETECTOR_PATH: join(__dirname, "pose_estimation/haarcascade_frontalface_default.xml"),
     WIDTH: 640,
     HEIGHT: 480,
     RPI_WIDTH: 320,
