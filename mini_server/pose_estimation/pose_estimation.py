@@ -1,8 +1,14 @@
+import os
+
+FILE_PATH = os.path.dirname(os.path.realpath(__file__))
+os.chdir(FILE_PATH)
+
 import json, cv2, base64, time, numpy as np
 from websockets.sync.client import connect
 from websockets.exceptions import InvalidURI, InvalidHandshake, ConnectionClosedError
 from os.path import join, abspath
 from mediapipe import solutions
+from rmn import RMN
 from json import dumps
 
 with open(
@@ -13,6 +19,7 @@ with open(
     SERVER_IP: str = SETUP["SERVER_IP"]
     WIDTH: int = SETUP["WIDTH"]
     HEIGHT: int = SETUP["HEIGHT"]
+    FACE_DETECTOR_PATH: str = SETUP["FACE_DETECTOR_PATH"]
 
 
 class Landmark:
@@ -53,6 +60,19 @@ camera_matrix = np.array(
     dtype=np.float64,
 )
 
+face_detector = cv2.CascadeClassifier(FACE_DETECTOR_PATH)
+rmn = RMN()
+
+FEX_MAP = {
+    "angry": "ND",
+    "disgust": "ND",
+    "fear": "ND",
+    "happy": "F",
+    "sad": "ND",
+    "surprise": "S",
+    "neutral": "N",
+}
+
 while True:
     try:
         with connect(f"ws://{SERVER_IP}:3000") as websocket:
@@ -61,6 +81,19 @@ while True:
                     ok, frame = cap.read()
                     if not ok:
                         continue
+                    # determine fex
+                    gray_scale = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                    faces = face_detector.detectMultiScale(
+                        gray_scale, scaleFactor=1.1, minNeighbors=4
+                    )
+                    if len(faces):
+                        x, y, w, h = faces[0]
+                        cropped = frame[y : y + h, x : x + w]
+                        detected_fex = rmn.detect_emotion_for_single_face_image(cropped)
+                        websocket.send(
+                            json.dumps({"type": "fex", "fex": FEX_MAP[detected_fex[0]]})
+                        )
+                    # determine pose
                     op = face_mesh.process(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
                     face_2d = []
                     if op.multi_face_landmarks:
