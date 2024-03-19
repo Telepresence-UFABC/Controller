@@ -20,6 +20,7 @@ with open(
     WIDTH: int = SETUP["WIDTH"]
     HEIGHT: int = SETUP["HEIGHT"]
     FACE_DETECTOR_PATH: str = SETUP["FACE_DETECTOR_PATH"]
+    FEX_INTERVAL = 1
 
 
 class Landmark:
@@ -77,22 +78,33 @@ while True:
     try:
         with connect(f"ws://{SERVER_IP}:3000") as websocket:
             with mp_face_mesh.FaceMesh() as face_mesh:
+                prev = time.time()
+                curr = time.time()
                 while True:
                     ok, frame = cap.read()
                     if not ok:
                         continue
                     # determine fex
-                    gray_scale = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                    faces = face_detector.detectMultiScale(
-                        gray_scale, scaleFactor=1.1, minNeighbors=4
-                    )
-                    if len(faces):
-                        x, y, w, h = faces[0]
-                        cropped = frame[y : y + h, x : x + w]
-                        detected_fex = rmn.detect_emotion_for_single_face_image(cropped)
-                        websocket.send(
-                            json.dumps({"type": "auto_fex", "fex": FEX_MAP[detected_fex[0]]})
+                    if curr - prev >= FEX_INTERVAL:
+                        gray_scale = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                        faces = face_detector.detectMultiScale(
+                            gray_scale, scaleFactor=1.1, minNeighbors=4
                         )
+                        if len(faces):
+                            x, y, w, h = faces[0]
+                            cropped = frame[y : y + h, x : x + w]
+                            detected_fex = rmn.detect_emotion_for_single_face_image(
+                                cropped
+                            )
+                            websocket.send(
+                                json.dumps(
+                                    {
+                                        "type": "auto_fex",
+                                        "fex": FEX_MAP[detected_fex[0]],
+                                    }
+                                )
+                            )
+                        prev = time.time()
                     # determine pose
                     op = face_mesh.process(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
                     face_2d = []
@@ -168,7 +180,7 @@ while True:
                     websocket.send(
                         json.dumps({"type": "interface_video", "media": frame})
                     )
-
+                    curr = time.time()
     except (InvalidURI, OSError, InvalidHandshake, ConnectionClosedError) as e:
         print(f"Could not connect to server, error: {e}")
         time.sleep(2)
