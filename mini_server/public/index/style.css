@@ -1,12 +1,26 @@
+:root {
+    --gray-ultra-light: rgba(112, 128, 144, 0.2);
+    --gray-light: rgba(112, 128, 144, 0.4);
+    --gray-medium: rgba(112, 128, 144, 0.6);
+    --gray-dark: rgba(112, 128, 144, 0.8);
+    --gray-ultra-dark: rgba(112, 128, 144, 1);
+
+    --blue-ultra-light: rgba(96, 174, 252, 0.2);
+    --blue-light: rgba(96, 174, 252, 0.4);
+    --blue-medium: rgba(96, 174, 252, 0.6);
+    --blue-dark: rgba(96, 174, 252, 0.8);
+    --blue-ultra-dark: rgba(96, 174, 252, 1);
+}
+
 body {
     text-align: center;
-    background-color: #f6f6f6;
+    background-color: #f8f7f4;
     font-family: sans-serif;
 }
 
 header {
-    background-color: rgba(112, 128, 144, 0.2);
-    color: rgba(112, 128, 144, 0.6);
+    background-color: var(--gray-ultra-light);
+    color: var(--gray-medium);
     padding: 10px;
     border-radius: 10px;
     display: flex;
@@ -79,23 +93,35 @@ input[type="checkbox"] {
     padding: 10px;
     width: 5em;
     height: 3em;
-    background-color: rgba(112, 128, 144, 0.4);
+    background-color: var(--gray-ultra-light);
     border-radius: 5px;
     transition: 0.3s ease;
 }
 
 .checkbox-label:hover {
-    background-color: #707070;
+    background-color: var(--gray-light);
 }
 
 input[type="radio"]:checked + label,
 input[type="checkbox"]:checked + label {
-    background-color: rgba(112, 128, 144, 0.8);
+    background-color: var(--blue-medium);
 }
 
 input[type="radio"]:checked:hover + label,
 input[type="checkbox"]:checked:hover + label {
-    background-color: rgba(112, 128, 144, 1);
+    background-color: var(--blue-dark);
+}
+
+input[type="radio"]:disabled + label {
+    background-color: var(--gray-ultra-dark);
+}
+
+input[type="radio"]:checked:disabled + label {
+    background-color: var(--blue-ultra-dark);
+}
+
+input[type="radio"]:disabled:hover + label {
+    cursor: auto;
 }
 
 /* Sliders */
@@ -109,7 +135,7 @@ input[type="checkbox"]:checked:hover + label {
 .slider-container {
     width: 220px;
     margin: 0px;
-    background-color: #f6f6f6;
+    background-color: #f8f7f4;
     border-radius: 10px;
     border: 3px solid gray;
     display: grid;
