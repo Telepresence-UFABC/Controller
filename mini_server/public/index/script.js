@@ -152,7 +152,6 @@ expressionButtons.forEach((button) => {
 
 // Updates expression to the last value sent
 function updateFacialExpression(message) {
-    console.log("rodou");
     document.getElementById(message.fex).checked = true;
 }
 
@@ -209,7 +208,7 @@ function toggleEnable() {
 async function sendFex() {
     websocket.send(
         JSON.stringify({
-            type: "fex",
+            type: "manual_fex",
             fex: state.fex,
         })
     );

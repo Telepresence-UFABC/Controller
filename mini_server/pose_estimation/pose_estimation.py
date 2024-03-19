@@ -91,7 +91,7 @@ while True:
                         cropped = frame[y : y + h, x : x + w]
                         detected_fex = rmn.detect_emotion_for_single_face_image(cropped)
                         websocket.send(
-                            json.dumps({"type": "fex", "fex": FEX_MAP[detected_fex[0]]})
+                            json.dumps({"type": "auto_fex", "fex": FEX_MAP[detected_fex[0]]})
                         )
                     # determine pose
                     op = face_mesh.process(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))

@@ -78,16 +78,31 @@ wsServer.on("connection", function (connection) {
                 distributeData({ type: "fex", fex: state.fex }, 0);
                 distributeData({ type: "auto_state", auto: state.auto }, 0);
                 break;
-            case "fex":
-                state.fex = message.fex === "ND" ? "N" : message.fex;
+            case "auto_fex":
+                if (state.auto) {
+                    state.fex = message.fex === "ND" ? "N" : message.fex;
 
-                distributeData(
-                    {
-                        type: "fex",
-                        fex: state.fex,
-                    },
-                    userID
-                );
+                    distributeData(
+                        {
+                            type: "fex",
+                            fex: state.fex,
+                        },
+                        userID
+                    );
+                }
+                break;
+            case "manual_fex":
+                if (!state.auto) {
+                    state.fex = message.fex === "ND" ? "N" : message.fex;
+
+                    distributeData(
+                        {
+                            type: "fex",
+                            fex: state.fex,
+                        },
+                        userID
+                    );
+                }
                 break;
             case "auto_pose":
                 if (state.auto) {
